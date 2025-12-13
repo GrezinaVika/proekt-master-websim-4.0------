@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RestaurantSys</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            object-fit: contain;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #2c3e50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="topbar">
+            <div class="brand">
+                <!-- Используем реальный логотип из твоего описания -->
+                <img src="https://284baef4-3d14-4ca5-8247-4811f0d6b14b.selstorage.ru/c3741c32-5696-4497-86af-c7dc006ad6a4_logo_flower_(1).png" 
+                     alt="Platter Flow Logo" 
+                     class="logo">
+                <div class="title">Platter Flow</div>
+            </div>
+            <div class="icons"></div>
+        </header>
+
+        <main class="card">
+            <section id="authSection" class="pane center-auth">
+                <div class="tabs-auth">
+                    <button id="tabLogin" class="tab active">Вход</button>
+                    <button id="tabRegister" class="tab">Регистрация</button>
+                </div>
+
+                <div id="loginForm" class="form">
+                    <input id="loginUser" placeholder="Логин" />
+                    <input id="loginPass" placeholder="Пароль" type="password" />
+                    <div class="row">
+                        <select id="loginRole">
+                            <option value="waiter">Официант</option>
+                            <option value="chef">Повар</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                        <button id="doLogin" class="primary">Войти</button>
+                    </div>
+
+                    <div class="cred-box">
+                        <div class="cred-title">Данные для входа</div>
+                        <div class="cred-row"><strong>Официант:</strong> ofikNum1 / 123321</div>
+                        <div class="cred-row"><strong>Администратор:</strong> adminNum1 / 123321</div>
+                        <div class="cred-row"><strong>Повар:</strong> povarNum1 / 123321</div>
+                    </div>
+                </div>
+
+                <div id="registerForm" class="form hidden">
+                    <input id="regUser" placeholder="Логин" />
+                    <input id="regPass" placeholder="Пароль" type="password" />
+                    <div class="row">
+                        <select id="regRole">
+                            <option value="waiter">Официант</option>
+                            <option value="chef">Повар</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                        <button id="doRegister" class="primary">Зарегистрироваться</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="appSection" class="pane hidden">
+                <nav class="menu">
+                    <button class="menu-btn active" data-tab="menuTab">Меню</button>
+                    <button class="menu-btn" data-tab="ordersTab">Заказы</button>
+                    <button class="menu-btn" data-tab="tablesTab">Столы</button>
+                    <button class="menu-btn" data-tab="accountTab">Личный кабинет</button>
+                </nav>
+
+                <div id="menuTab" class="tabpane">
+                    <div class="tabs-switch">
+                        <button class="switch-btn active" data-section="main">Основное</button>
+                        <button class="switch-btn" data-section="hot">Горячее</button>
+                        <button class="switch-btn" data-section="drinks">Напитки</button>
+                        <button class="switch-btn" data-section="dessert">Десерт</button>
+                    </div>
+                    <div id="menuContent" class="menu-list">
+                        <!-- items injected (read-only display) -->
+                    </div>
+                    <div class="info-muted">Добавление в заказ производится через раздел «Столы» — выберите стол и добавьте позиции.</div>
+                </div>
+
+                <div id="ordersTab" class="tabpane hidden">
+                    <div class="orders-list" id="ordersList"></div>
+                </div>
+
+                <div id="tablesTab" class="tabpane hidden">
+                    <div class="tables-grid" id="tablesGrid"></div>
+                </div>
+
+                <div id="accountTab" class="tabpane hidden">
+                    <div id="accountInfo" class="account-card"></div>
+                    <div class="account-stats">
+                        <div class="stat">
+                            <div class="stat-num" id="statOrders">0</div>
+                            <div class="stat-label">Всего заказов</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num" id="statActive">0</div>
+                            <div class="stat-label">Активных</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num" id="statTables">0</div>
+                            <div class="stat-label">Занятых столов</div>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="danger">Выйти</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bottombar hidden" aria-hidden="true"></footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -5,36 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>RestaurantSys</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        .logo {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-            object-fit: contain;
-        }
-        .brand {
-            display: flex;
-            align-items: center;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #2c3e50;
-            color: white;
-        }
-    </style>
 </head>
 <body>
     <div id="app">
         <header class="topbar">
             <div class="brand">
-                <!-- Используем реальный логотип из твоего описания -->
                 <img src="https://284baef4-3d14-4ca5-8247-4811f0d6b14b.selstorage.ru/c3741c32-5696-4497-86af-c7dc006ad6a4_logo_flower_(1).png" 
                      alt="Platter Flow Logo" 
                      class="logo">
@@ -99,9 +74,7 @@
                         <button class="switch-btn" data-section="drinks">Напитки</button>
                         <button class="switch-btn" data-section="dessert">Десерт</button>
                     </div>
-                    <div id="menuContent" class="menu-list">
-                        <!-- items injected (read-only display) -->
-                    </div>
+                    <div id="menuContent" class="menu-list"></div>
                     <div class="info-muted">Добавление в заказ производится через раздел «Столы» — выберите стол и добавьте позиции.</div>
                 </div>
 

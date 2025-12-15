@@ -1,17 +1,17 @@
 :root {
-    /* palette shifted to soft green + warm yellow accents */
     --bg: #f6fbf6;
     --card: #ffffff;
-    --accent: #7bbf6a; /* soft green */
-    --muted: #5a6b56;  /* muted deep green */
-    --accent-2: #f6f5d6; /* pale yellow */
-    --accent-3: #f2e8b6; /* soft warm highlight */
+    --accent: #7bbf6a;
+    --muted: #5a6b56;
+    --accent-2: #f6f5d6;
+    --accent-3: #f2e8b6;
     --success: #2d9f6c;
     --danger: #d9534f;
-    font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -20,6 +20,10 @@ html, body, #app {
     margin: 0;
     background: linear-gradient(180deg, var(--accent-2), var(--bg));
     -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 .topbar {
@@ -54,32 +58,6 @@ html, body, #app {
     display: flex;
     gap: 8px;
     align-items: center;
-}
-
-.icon-btn {
-    background: none;
-    border: none;
-    font-size: 18px;
-    position: relative;
-    padding: 6px;
-    border-radius: 8px;
-}
-
-.icon-img {
-    height: 22px;
-    width: 22px;
-    object-fit: contain;
-}
-
-.badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 11px;
 }
 
 .card {
@@ -260,11 +238,6 @@ html, body, #app {
     align-items: center;
 }
 
-.order .meta {
-    color: var(--muted);
-    font-size: 13px;
-}
-
 .tables-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -337,7 +310,6 @@ html, body, #app {
     opacity: 0.9;
 }
 
-/* Модальное окно */
 .modal {
     position: fixed;
     top: 0;

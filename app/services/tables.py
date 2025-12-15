@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.tables import TablesModel
-from app.schemas import TableCreate, TableUpdate
 
 class TableService:
     def __init__(self, db: Session):
@@ -17,9 +16,9 @@ class TableService:
         """Получает только свободные столики"""
         return self.db.query(TablesModel).filter(TablesModel.status == "available").all()
     
-    def create_table(self, table_data: TableCreate):
+    def create_table(self, table_data):
         db_table = TablesModel(
-            table_number=table_data.table_number,
+            table_number=getattr(table_data, 'table_number', 1),
             capacity=getattr(table_data, 'seats', 4),
             status="available"
         )
@@ -28,7 +27,7 @@ class TableService:
         self.db.refresh(db_table)
         return db_table
     
-    def update_table(self, table_id: int, table_data: TableUpdate):
+    def update_table(self, table_id: int, table_data):
         table = self.get_table(table_id)
         if not table:
             return None

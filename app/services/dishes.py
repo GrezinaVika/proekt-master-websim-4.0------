@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.dishes import DishesModel
-from app.schemas import DishCreate, DishUpdate
 
 class DishService:
     def __init__(self, db: Session):
@@ -17,11 +16,11 @@ class DishService:
         """Получает блюда по категории"""
         return self.db.query(DishesModel).filter(DishesModel.category_id == category).all()
     
-    def create_dish(self, dish_data: DishCreate):
+    def create_dish(self, dish_data):
         db_dish = DishesModel(
-            name=dish_data.name,
-            description=dish_data.description,
-            price=dish_data.price,
+            name=getattr(dish_data, 'name', 'Unknown'),
+            description=getattr(dish_data, 'description', ''),
+            price=getattr(dish_data, 'price', 0.0),
             category_id=getattr(dish_data, 'category_id', 1),
             admin_id=1,
             is_available=True
@@ -31,16 +30,16 @@ class DishService:
         self.db.refresh(db_dish)
         return db_dish
     
-    def update_dish(self, dish_id: int, dish_data: DishUpdate):
+    def update_dish(self, dish_id: int, dish_data):
         dish = self.get_dish(dish_id)
         if not dish:
             return None
         
-        if dish_data.name:
+        if hasattr(dish_data, 'name') and dish_data.name:
             dish.name = dish_data.name
-        if dish_data.description:
+        if hasattr(dish_data, 'description') and dish_data.description:
             dish.description = dish_data.description
-        if dish_data.price:
+        if hasattr(dish_data, 'price') and dish_data.price:
             dish.price = dish_data.price
         if hasattr(dish_data, 'is_available') and dish_data.is_available is not None:
             dish.is_available = dish_data.is_available

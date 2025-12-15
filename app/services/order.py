@@ -1,21 +1,19 @@
 from sqlalchemy.orm import Session
 from app.models.order import OrderModel
 from app.models.tables import TablesModel
-from app.schemas import OrderCreate, OrderUpdate
 from datetime import datetime
 
 class OrderService:
     def __init__(self, db: Session):
         self.db = db
     
-    def create_order(self, order_data: OrderCreate, user_id: int):
+    def create_order(self, order_data, user_id: int):
         """Создает новый заказ"""
-        # Создаем основной заказ
         db_order = OrderModel(
-            table_id=order_data.table_id,
+            table_id=getattr(order_data, 'table_id', 1),
             waiters_id=user_id,
             status="created",
-            total_amount=order_data.total_price if hasattr(order_data, 'total_price') else 0.0,
+            total_amount=getattr(order_data, 'total_price', 0.0),
             created_at=datetime.now()
         )
         self.db.add(db_order)

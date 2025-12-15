@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.order import OrderModel
-from app.schemas import OrderCreate
 from datetime import datetime
 
 class OrderRepository:
@@ -23,13 +22,13 @@ class OrderRepository:
         """Находит заказы по статусу"""
         return self.db.query(OrderModel).filter(OrderModel.status == status).all()
     
-    def create(self, order_data: OrderCreate, user_id: int):
+    def create(self, order_data, user_id: int):
         """Создает новый заказ"""
         db_order = OrderModel(
-            table_id=order_data.table_id,
+            table_id=getattr(order_data, 'table_id', 1),
             waiters_id=user_id,
             status="created",
-            total_amount=order_data.total_price if hasattr(order_data, 'total_price') else 0.0,
+            total_amount=getattr(order_data, 'total_price', 0.0),
             created_at=datetime.now()
         )
         self.db.add(db_order)

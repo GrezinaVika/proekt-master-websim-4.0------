@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.tables import TablesModel
-from app.schemas import TableCreate
 
 class TableRepository:
     def __init__(self, db: Session):
@@ -22,10 +21,10 @@ class TableRepository:
         """Возвращает только занятые столы"""
         return self.db.query(TablesModel).filter(TablesModel.status == "occupied").all()
     
-    def create(self, table_data: TableCreate):
+    def create(self, table_data):
         """Создает новый стол"""
         db_table = TablesModel(
-            table_number=table_data.table_number,
+            table_number=getattr(table_data, 'table_number', 1),
             capacity=getattr(table_data, 'seats', 4),
             status="available"
         )

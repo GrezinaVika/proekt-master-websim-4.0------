@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.users import User
-from app.schemas import UserCreate
 
 class UserRepository:
     def __init__(self, db: Session):
@@ -14,16 +13,23 @@ class UserRepository:
         """Находит пользователя по имени"""
         return self.db.query(User).filter(User.username == username).first()
     
+    def find_by_email(self, email: str):
+        """Находит пользователя по email"""
+        return self.db.query(User).filter(User.email == email).first()
+    
     def find_all(self):
         """Возвращает всех пользователей"""
         return self.db.query(User).all()
     
-    def create(self, user_data: UserCreate):
+    def create(self, user_data):
         """Создает нового пользователя"""
         db_user = User(
-            username=user_data.username,
-            password=user_data.password,
-            role=user_data.role
+            username=getattr(user_data, 'username', 'user'),
+            email=getattr(user_data, 'email', 'user@example.com'),
+            hashed_password=getattr(user_data, 'hashed_password', 'password'),
+            full_name=getattr(user_data, 'full_name', ''),
+            is_active=True,
+            is_superuser=False
         )
         self.db.add(db_user)
         self.db.commit()

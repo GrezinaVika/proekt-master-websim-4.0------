@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.models.dishes import DishesModel
-from app.schemas import DishCreate
 
 class DishRepository:
     def __init__(self, db: Session):
@@ -22,12 +21,12 @@ class DishRepository:
         """Возвращает только доступные блюда"""
         return self.db.query(DishesModel).filter(DishesModel.is_available == True).all()
     
-    def create(self, dish_data: DishCreate):
+    def create(self, dish_data):
         """Создает новое блюдо"""
         db_dish = DishesModel(
-            name=dish_data.name,
-            description=dish_data.description,
-            price=dish_data.price,
+            name=getattr(dish_data, 'name', 'Unknown'),
+            description=getattr(dish_data, 'description', ''),
+            price=getattr(dish_data, 'price', 0.0),
             category_id=getattr(dish_data, 'category_id', 1),
             admin_id=1,
             is_available=True

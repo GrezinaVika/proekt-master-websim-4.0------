@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.tables import Table
+from app.models.tables import TablesModel
 from app.schemas import TableCreate
 
 class TableRepository:
@@ -8,26 +8,26 @@ class TableRepository:
     
     def find_by_id(self, table_id: int):
         """Находит стол по ID"""
-        return self.db.query(Table).filter(Table.id == table_id).first()
+        return self.db.query(TablesModel).filter(TablesModel.id == table_id).first()
     
     def find_all(self):
         """Возвращает все столы"""
-        return self.db.query(Table).all()
+        return self.db.query(TablesModel).all()
     
     def find_free(self):
         """Возвращает только свободные столы"""
-        return self.db.query(Table).filter(Table.status == "free").all()
+        return self.db.query(TablesModel).filter(TablesModel.status == "available").all()
     
     def find_occupied(self):
         """Возвращает только занятые столы"""
-        return self.db.query(Table).filter(Table.status == "occupied").all()
+        return self.db.query(TablesModel).filter(TablesModel.status == "occupied").all()
     
     def create(self, table_data: TableCreate):
         """Создает новый стол"""
-        db_table = Table(
+        db_table = TablesModel(
             table_number=table_data.table_number,
-            seats=table_data.seats,
-            status="free"
+            capacity=getattr(table_data, 'seats', 4),
+            status="available"
         )
         self.db.add(db_table)
         self.db.commit()

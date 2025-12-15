@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.dishes import Dish
+from app.models.dishes import DishesModel
 from app.schemas import DishCreate
 
 class DishRepository:
@@ -8,28 +8,29 @@ class DishRepository:
     
     def find_by_id(self, dish_id: int):
         """Находит блюдо по ID"""
-        return self.db.query(Dish).filter(Dish.id == dish_id).first()
+        return self.db.query(DishesModel).filter(DishesModel.id == dish_id).first()
     
     def find_all(self):
         """Возвращает все блюда"""
-        return self.db.query(Dish).all()
+        return self.db.query(DishesModel).all()
     
     def find_by_category(self, category: str):
         """Возвращает блюда по категории"""
-        return self.db.query(Dish).filter(Dish.category == category).all()
+        return self.db.query(DishesModel).filter(DishesModel.category_id == category).all()
     
     def find_available(self):
         """Возвращает только доступные блюда"""
-        return self.db.query(Dish).filter(Dish.available == True).all()
+        return self.db.query(DishesModel).filter(DishesModel.is_available == True).all()
     
     def create(self, dish_data: DishCreate):
         """Создает новое блюдо"""
-        db_dish = Dish(
+        db_dish = DishesModel(
             name=dish_data.name,
             description=dish_data.description,
             price=dish_data.price,
-            category=dish_data.category,
-            available=True
+            category_id=getattr(dish_data, 'category_id', 1),
+            admin_id=1,
+            is_available=True
         )
         self.db.add(db_dish)
         self.db.commit()

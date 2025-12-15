@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.order import Order
-from app.models.order_items import OrderItem
+from app.models.order import OrderModel
 from app.schemas import OrderCreate
 from datetime import datetime
 
@@ -10,42 +9,30 @@ class OrderRepository:
     
     def find_by_id(self, order_id: int):
         """Находит заказ по ID"""
-        return self.db.query(Order).filter(Order.id == order_id).first()
+        return self.db.query(OrderModel).filter(OrderModel.id == order_id).first()
     
     def find_all(self):
         """Возвращает все заказы"""
-        return self.db.query(Order).all()
+        return self.db.query(OrderModel).all()
     
     def find_by_table(self, table_id: int):
         """Находит заказы по столику"""
-        return self.db.query(Order).filter(Order.table_id == table_id).all()
+        return self.db.query(OrderModel).filter(OrderModel.table_id == table_id).all()
     
     def find_by_status(self, status: str):
         """Находит заказы по статусу"""
-        return self.db.query(Order).filter(Order.status == status).all()
+        return self.db.query(OrderModel).filter(OrderModel.status == status).all()
     
     def create(self, order_data: OrderCreate, user_id: int):
         """Создает новый заказ"""
-        db_order = Order(
+        db_order = OrderModel(
             table_id=order_data.table_id,
-            user_id=user_id,
-            status="pending",
-            total_price=order_data.total_price,
+            waiters_id=user_id,
+            status="created",
+            total_amount=order_data.total_price if hasattr(order_data, 'total_price') else 0.0,
             created_at=datetime.now()
         )
         self.db.add(db_order)
-        self.db.flush()
-        
-        # Добавляем элементы заказа
-        for item in order_data.items:
-            order_item = OrderItem(
-                order_id=db_order.id,
-                dish_id=item.dish_id,
-                quantity=item.quantity,
-                price=item.price
-            )
-            self.db.add(order_item)
-        
         self.db.commit()
         self.db.refresh(db_order)
         return db_order

@@ -1,30 +1,51 @@
-from app.repositories.tables import TableRepository
-from app.schemes.tables import TableCreate, TableUpdate
+from sqlalchemy.orm import Session
+from app.models import Table
+from app.schemas import TableCreate, TableUpdate
 
 class TableService:
-    def __init__(self, repository: TableRepository):
-        self.repository = repository
+    def __init__(self, db: Session):
+        self.db = db
     
-    def get_all_tables(self, skip: int = 0, limit: int = 100):
-        return self.repository.get_all(skip, limit)
+    def get_table(self, table_id: int):
+        return self.db.query(Table).filter(Table.id == table_id).first()
     
-    def get_table_by_id(self, table_id: int):
-        return self.repository.get_by_id(table_id)
+    def get_all_tables(self):
+        """Получает все столики"""
+        return self.db.query(Table).all()
     
-    def get_table_by_number(self, table_number: int):
-        return self.repository.get_by_number(table_number)
+    def get_free_tables(self):
+        """Получает только свободные столики"""
+        return self.db.query(Table).filter(Table.status == "free").all()
     
     def create_table(self, table_data: TableCreate):
-        return self.repository.create(table_data)
+        db_table = Table(
+            table_number=table_data.table_number,
+            seats=table_data.seats,
+            status="free"
+        )
+        self.db.add(db_table)
+        self.db.commit()
+        self.db.refresh(db_table)
+        return db_table
     
     def update_table(self, table_id: int, table_data: TableUpdate):
-        return self.repository.update(table_id, table_data)
+        table = self.get_table(table_id)
+        if not table:
+            return None
+        
+        if table_data.status:
+            table.status = table_data.status
+        if table_data.seats:
+            table.seats = table_data.seats
+        
+        self.db.commit()
+        self.db.refresh(table)
+        return table
     
     def delete_table(self, table_id: int):
-        return self.repository.delete(table_id)
-    
-    def get_available_tables(self):
-        return self.repository.get_available_tables()
-    
-    def update_table_status(self, table_id: int, status: str):
-        return self.repository.update_status(table_id, status)
+        table = self.get_table(table_id)
+        if table:
+            self.db.delete(table)
+            self.db.commit()
+            return True
+        return False

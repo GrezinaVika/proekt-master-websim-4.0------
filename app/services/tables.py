@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models import Table
+from app.models.tables import Table
 from app.schemas import TableCreate, TableUpdate
 
 class TableService:

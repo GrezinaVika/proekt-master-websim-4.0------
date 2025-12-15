@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models import Dish
+from app.models.dishes import Dish
 from app.schemas import DishCreate, DishUpdate
 
 class DishService:

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.dishes import Dish
+from app.models.dishes import DishesModel
 from app.schemas import DishCreate, DishUpdate
 
 class DishService:
@@ -7,23 +7,24 @@ class DishService:
         self.db = db
     
     def get_dish(self, dish_id: int):
-        return self.db.query(Dish).filter(Dish.id == dish_id).first()
+        return self.db.query(DishesModel).filter(DishesModel.id == dish_id).first()
     
     def get_all_dishes(self):
         """Получает все блюда из меню"""
-        return self.db.query(Dish).all()
+        return self.db.query(DishesModel).all()
     
     def get_dishes_by_category(self, category: str):
         """Получает блюда по категории"""
-        return self.db.query(Dish).filter(Dish.category == category).all()
+        return self.db.query(DishesModel).filter(DishesModel.category_id == category).all()
     
     def create_dish(self, dish_data: DishCreate):
-        db_dish = Dish(
+        db_dish = DishesModel(
             name=dish_data.name,
             description=dish_data.description,
             price=dish_data.price,
-            category=dish_data.category,
-            available=True
+            category_id=getattr(dish_data, 'category_id', 1),
+            admin_id=1,
+            is_available=True
         )
         self.db.add(db_dish)
         self.db.commit()
@@ -41,10 +42,8 @@ class DishService:
             dish.description = dish_data.description
         if dish_data.price:
             dish.price = dish_data.price
-        if dish_data.category:
-            dish.category = dish_data.category
-        if dish_data.available is not None:
-            dish.available = dish_data.available
+        if hasattr(dish_data, 'is_available') and dish_data.is_available is not None:
+            dish.is_available = dish_data.is_available
         
         self.db.commit()
         self.db.refresh(dish)

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.tables import Table
+from app.models.tables import TablesModel
 from app.schemas import TableCreate, TableUpdate
 
 class TableService:
@@ -7,21 +7,21 @@ class TableService:
         self.db = db
     
     def get_table(self, table_id: int):
-        return self.db.query(Table).filter(Table.id == table_id).first()
+        return self.db.query(TablesModel).filter(TablesModel.id == table_id).first()
     
     def get_all_tables(self):
         """Получает все столики"""
-        return self.db.query(Table).all()
+        return self.db.query(TablesModel).all()
     
     def get_free_tables(self):
         """Получает только свободные столики"""
-        return self.db.query(Table).filter(Table.status == "free").all()
+        return self.db.query(TablesModel).filter(TablesModel.status == "available").all()
     
     def create_table(self, table_data: TableCreate):
-        db_table = Table(
+        db_table = TablesModel(
             table_number=table_data.table_number,
-            seats=table_data.seats,
-            status="free"
+            capacity=getattr(table_data, 'seats', 4),
+            status="available"
         )
         self.db.add(db_table)
         self.db.commit()
@@ -33,10 +33,10 @@ class TableService:
         if not table:
             return None
         
-        if table_data.status:
+        if hasattr(table_data, 'status') and table_data.status:
             table.status = table_data.status
-        if table_data.seats:
-            table.seats = table_data.seats
+        if hasattr(table_data, 'seats') and table_data.seats:
+            table.capacity = table_data.seats
         
         self.db.commit()
         self.db.refresh(table)

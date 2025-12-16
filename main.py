@@ -46,7 +46,7 @@ from app.api import order
 from app.api import tables
 from app.api import categories
 from app.api import order_items
-from app.api import waiter_stayistics
+from app.api import waiter_statistics
 from app.api import cook_statistics
 from app.api import waiter
 from app.api import admin
@@ -62,7 +62,7 @@ app.include_router(order.router, prefix=api_prefix)
 app.include_router(tables.router, prefix=api_prefix)
 app.include_router(categories.router, prefix=api_prefix)
 app.include_router(order_items.router, prefix=api_prefix)
-app.include_router(waiter_stayistics.router, prefix=api_prefix)
+app.include_router(waiter_statistics.router, prefix=api_prefix)
 app.include_router(cook_statistics.router, prefix=api_prefix)
 app.include_router(waiter.router, prefix=api_prefix)
 app.include_router(admin.router, prefix=api_prefix)

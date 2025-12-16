@@ -6,8 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/tables", tags=["tables"])
-
+router = APIRouter(prefix="/tables", tags=["tables"])
 @router.get("/", response_model=list[TableResponse])
 def get_tables(
     skip: int = 0,

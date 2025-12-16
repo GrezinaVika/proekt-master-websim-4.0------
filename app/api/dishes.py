@@ -6,8 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/dishes", tags=["dishes"])
-
+router = APIRouter(prefix="/dishes", tags=["dishes"])
 @router.get("/", response_model=list[DishResponse])
 def get_dishes(
     skip: int = 0,

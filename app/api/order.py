@@ -6,8 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/orders", tags=["orders"])
-
+router = APIRouter(prefix="/orders", tags=["orders"])
 @router.get("/", response_model=list[OrderResponse])
 def get_orders(
     skip: int = 0,

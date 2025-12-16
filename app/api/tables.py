@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemes.tables import TableCreate, TableUpdate, TableResponse
 from app.services.tables import TableService
 from app.api.dependencies import get_table_service
+import logging
 
-router = APIRouter(prefix="/tables", tags=["tables"])
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/tables", tags=["tables"])
 
 @router.get("/", response_model=list[TableResponse])
 def get_tables(
@@ -11,47 +14,61 @@ def get_tables(
     limit: int = 100,
     table_service: TableService = Depends(get_table_service)
 ):
-    return table_service.get_all_tables(skip, limit)
+    """Get all tables with pagination"""
+    try:
+        return table_service.get_all_tables(skip, limit)
+    except Exception as e:
+        logger.error(f"Error getting tables: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving tables"
+        )
 
 @router.get("/{table_id}", response_model=TableResponse)
 def get_table(
     table_id: int,
     table_service: TableService = Depends(get_table_service)
 ):
-    table = table_service.get_table_by_id(table_id)
-    if not table:
+    """Get single table by ID"""
+    try:
+        table = table_service.get_table_by_id(table_id)
+        if not table:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Table not found"
+            )
+        return table
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting table {table_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving table"
         )
-    return table
-
-@router.get("/number/{table_number}", response_model=TableResponse)
-def get_table_by_number(
-    table_number: int,
-    table_service: TableService = Depends(get_table_service)
-):
-    table = table_service.get_table_by_number(table_number)
-    if not table:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
-    return table
 
 @router.post("/", response_model=TableResponse, status_code=status.HTTP_201_CREATED)
 def create_table(
     table_data: TableCreate,
     table_service: TableService = Depends(get_table_service)
 ):
-    # Проверяем, существует ли столик с таким номером
-    existing = table_service.get_table_by_number(table_data.table_number)
-    if existing:
+    """Create new table"""
+    try:
+        table = table_service.create_table(table_data)
+        if not table:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not create table"
+            )
+        return table
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating table: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Table with number {table_data.table_number} already exists"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating table"
         )
-    return table_service.create_table(table_data)
 
 @router.put("/{table_id}", response_model=TableResponse)
 def update_table(
@@ -59,41 +76,41 @@ def update_table(
     table_data: TableUpdate,
     table_service: TableService = Depends(get_table_service)
 ):
-    table = table_service.update_table(table_id, table_data)
-    if not table:
+    """Update existing table"""
+    try:
+        table = table_service.update_table(table_id, table_data)
+        if not table:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Table not found"
+            )
+        return table
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating table {table_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating table"
         )
-    return table
 
 @router.delete("/{table_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_table(
     table_id: int,
     table_service: TableService = Depends(get_table_service)
 ):
-    if not table_service.delete_table(table_id):
+    """Delete table"""
+    try:
+        if not table_service.delete_table(table_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Table not found"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting table {table_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error deleting table"
         )
-
-@router.get("/available/", response_model=list[TableResponse])
-def get_available_tables(
-    table_service: TableService = Depends(get_table_service)
-):
-    return table_service.get_available_tables()
-
-@router.patch("/{table_id}/status/{status}", response_model=TableResponse)
-def update_table_status(
-    table_id: int,
-    status: str,
-    table_service: TableService = Depends(get_table_service)
-):
-    table = table_service.update_table_status(table_id, status)
-    if not table:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
-    return table

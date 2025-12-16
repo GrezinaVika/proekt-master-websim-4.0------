@@ -1,115 +1,646 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>RestaurantSys</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=1217001">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления Platter Flowом</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* AUTH */
+        #authSection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            gap: 40px;
+            padding: 20px;
+        }
+
+        .auth-container {
+            display: flex;
+            gap: 40px;
+            max-width: 900px;
+            align-items: flex-start;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .test-credentials {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 380px;
+            padding: 30px;
+        }
+
+        .test-credentials h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .test-user {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .test-user h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .test-user p {
+            margin: 4px 0;
+            color: #666;
+        }
+
+        .test-user code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            color: #333;
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .info-text {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #0288d1;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* APP */
+        #appSection {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+
+        .app-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            color: #667eea;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #accountInfo {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        #accountInfo h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        #accountInfo p {
+            margin: 0;
+            color: #666;
+        }
+
+        #logoutBtn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #logoutBtn:hover {
+            background: #c0392b;
+        }
+
+        .app-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-btn {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .menu-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+
+        .menu-btn.active {
+            background: #f0f0f0;
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .tabpane h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .item .name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .item .desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            min-height: 40px;
+        }
+
+        .item .meta {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .table {
+            cursor: pointer;
+        }
+
+        .table.booked {
+            background: #ffe8e8 !important;
+            border: 2px solid #e74c3c !important;
+        }
+
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .order {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .order .name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .order .meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        /* EMPLOYEES TABLE */
+        .employees-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .employees-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .employees-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .employees-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+            color: #333;
+        }
+
+        .employees-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+
+        .employees-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .role-badge.waiter {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-badge.chef {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .role-badge.admin {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-actions {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .primary { background: #667eea; color: white; }
+        .danger { background: #e74c3c; color: white; }
+        .secondary { background: #eee; color: #333; }
+        .success { background: #27ae60; color: white; }
+        .warning { background: #f39c12; color: white; }
+
+        button { transition: all 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        .dish-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; }
+            .items-grid { grid-template-columns: 1fr; }
+            #authSection { flex-direction: column; gap: 20px; }
+            .auth-container { flex-direction: column; max-width: 100%; }
+            .employees-table { font-size: 12px; }
+            .employees-table td, .employees-table th { padding: 8px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <header class="topbar">
-            <div class="brand">
-                <img src="https://284baef4-3d14-4ca5-8247-4811f0d6b14b.selstorage.ru/c3741c32-5696-4497-86af-c7dc006ad6a4_logo_flower_(1).png" 
-                     alt="Platter Flow Logo" 
-                     class="logo">
-                <div class="title">Platter Flow</div>
+    <!-- AUTH -->
+    <div id="authSection">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>🍽️ Platter Flow</h2>
+                <div class="info-text">
+                    <strong>⚠️ Важно:</strong> Роль привязана к вашему аккаунту. При входе под своим логином вы получите статус, назначенный администратором.
+                </div>
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="loginUser" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPass" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="doLogin">✅ Вход</button>
+                </form>
             </div>
-            <div class="icons"></div>
-        </header>
 
-        <main class="card">
-            <section id="authSection" class="pane center-auth">
-                <div class="tabs-auth">
-                    <button id="tabLogin" class="tab active">Вход</button>
-                    <button id="tabRegister" class="tab">Регистрация</button>
+            <div class="test-credentials">
+                <h3>🧪 Тестовые данные</h3>
+                <div class="test-user">
+                    <h4>👨‍💼 Официант</h4>
+                    <p>Логин: <code>ofikNum1</code></p>
+                    <p>Пароль: <code>123321</code></p>
                 </div>
-
-                <div id="loginForm" class="form">
-                    <input id="loginUser" placeholder="Логин" />
-                    <input id="loginPass" placeholder="Пароль" type="password" />
-                    <div class="row">
-                        <select id="loginRole">
-                            <option value="waiter">Официант</option>
-                            <option value="chef">Повар</option>
-                            <option value="admin">Администратор</option>
-                        </select>
-                        <button id="doLogin" class="primary">Войти</button>
-                    </div>
-
-                    <div class="cred-box">
-                        <div class="cred-title">Данные для входа</div>
-                        <div class="cred-row"><strong>Официант:</strong> ofikNum1 / 123321</div>
-                        <div class="cred-row"><strong>Администратор:</strong> adminNum1 / 123321</div>
-                        <div class="cred-row"><strong>Повар:</strong> povarNum1 / 123321</div>
-                    </div>
+                <div class="test-user">
+                    <h4>👨‍💼 Администратор</h4>
+                    <p>Логин: <code>adminNum1</code></p>
+                    <p>Пароль: <code>123321</code></p>
                 </div>
-
-                <div id="registerForm" class="form hidden">
-                    <input id="regUser" placeholder="Логин" />
-                    <input id="regPass" placeholder="Пароль" type="password" />
-                    <div class="row">
-                        <select id="regRole">
-                            <option value="waiter">Официант</option>
-                            <option value="chef">Повар</option>
-                            <option value="admin">Администратор</option>
-                        </select>
-                        <button id="doRegister" class="primary">Зарегистрироваться</button>
-                    </div>
+                <div class="test-user">
+                    <h4>👨‍🍳 Повар</h4>
+                    <p>Логин: <code>povarNum1</code></p>
+                    <p>Пароль: <code>123321</code></p>
                 </div>
-            </section>
-
-            <section id="appSection" class="pane hidden">
-                <nav class="menu">
-                    <button class="menu-btn active" data-tab="menuTab">Меню</button>
-                    <button class="menu-btn" data-tab="ordersTab">Заказы</button>
-                    <button class="menu-btn" data-tab="tablesTab">Столы</button>
-                    <button class="menu-btn" data-tab="accountTab">Личный кабинет</button>
-                </nav>
-
-                <div id="menuTab" class="tabpane">
-                    <div class="tabs-switch">
-                        <button class="switch-btn active" data-section="main">Основное</button>
-                        <button class="switch-btn" data-section="hot">Горячее</button>
-                        <button class="switch-btn" data-section="drinks">Напитки</button>
-                        <button class="switch-btn" data-section="dessert">Десерт</button>
-                    </div>
-                    <div id="menuContent" class="menu-list"></div>
-                    <div class="info-muted">Добавление в заказ производится через раздел «Столы» — выберите стол и добавьте позиции.</div>
-                </div>
-
-                <div id="ordersTab" class="tabpane hidden">
-                    <div class="orders-list" id="ordersList"></div>
-                </div>
-
-                <div id="tablesTab" class="tabpane hidden">
-                    <div class="tables-grid" id="tablesGrid"></div>
-                </div>
-
-                <div id="accountTab" class="tabpane hidden">
-                    <div id="accountInfo" class="account-card"></div>
-                    <div class="account-stats">
-                        <div class="stat">
-                            <div class="stat-num" id="statOrders">0</div>
-                            <div class="stat-label">Всего заказов</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-num" id="statActive">0</div>
-                            <div class="stat-label">Активных</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-num" id="statTables">0</div>
-                            <div class="stat-label">Занятых столов</div>
-                        </div>
-                    </div>
-                    <button id="logoutBtn" class="danger">Выйти</button>
-                </div>
-            </section>
-        </main>
-
-        <footer class="bottombar hidden" aria-hidden="true"></footer>
+            </div>
+        </div>
     </div>
 
-    <script src="/static/js/app.js?v=1217002"></script>
+    <!-- APP -->
+    <div id="appSection" class="hidden">
+        <div class="app-header">
+            <h1>🍽️ Platter Flow</h1>
+            <div class="header-right">
+                <div id="accountInfo">
+                    <h3>User</h3>
+                    <p>Role</p>
+                </div>
+                <button id="logoutBtn">Выход</button>
+            </div>
+        </div>
+        <div class="app-body">
+            <div class="sidebar">
+                <button class="menu-btn active" data-tab="menuTab">📋 Меню</button>
+                <button class="menu-btn" data-tab="tablesTab">🧑‍🍳 Столы</button>
+                <button class="menu-btn" data-tab="ordersTab">📦 Заказы</button>
+                <button class="menu-btn hidden" id="employeesMenuBtn" data-tab="employeesTab">👥 Сотрудники</button>
+            </div>
+            <div class="main-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Всего заказов</h3>
+                        <div class="value" id="statOrders">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Активные</h3>
+                        <div class="value" id="statActive">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Занято столов</h3>
+                        <div class="value" id="statTables">0</div>
+                    </div>
+                    <div class="stat-card hidden" id="statEmployeeCard">
+                        <h3>Сотрудников</h3>
+                        <div class="value" id="statEmployees">0</div>
+                    </div>
+                </div>
+                <div class="tabpane" id="menuTab">
+                    <h2>📋 Меню</h2>
+                    <div class="items-grid" id="menuContent"></div>
+                </div>
+                <div class="tabpane hidden" id="tablesTab">
+                    <h2>🧑‍🍳 Столы</h2>
+                    <div class="items-grid" id="tablesGrid"></div>
+                </div>
+                <div class="tabpane hidden" id="ordersTab">
+                    <h2>📦 Заказы</h2>
+                    <div class="orders-list" id="ordersList"></div>
+                </div>
+                <div class="tabpane hidden" id="employeesTab">
+                    <h2>👥 Сотрудники</h2>
+                    <div class="employees-container">
+                        <div class="employees-header">
+                            <h3 style="margin: 0;">Список сотрудников</h3>
+                            <button class="btn primary" style="width: auto; padding: 8px 16px; font-size: 14px;" onclick="addEmployeeModal()">➕ Добавить сотрудника</button>
+                        </div>
+                        <table class="employees-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Логин</th>
+                                    <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=1217003"></script>
 </body>
 </html>

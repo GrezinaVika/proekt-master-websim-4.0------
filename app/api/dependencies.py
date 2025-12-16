@@ -6,7 +6,6 @@ from app.database.database import get_db
 from app.repositories.dishes import DishRepository
 from app.repositories.orders import OrderRepository
 from app.repositories.tables import TableRepository
-from app.repositories.categories import CategoryRepository
 from app.repositories.order_items import OrderItemRepository
 from app.repositories.waiter_statistics import WaiterStatisticsRepository
 from app.repositories.cook_statistics import CookStatisticsRepository
@@ -21,7 +20,6 @@ from app.repositories.migration import MigrationRepository
 from app.services.dishes import DishService
 from app.services.order import OrderService
 from app.services.tables import TableService
-from app.services.categories import CategoryService
 from app.services.order_items import OrderItemService
 from app.services.waiter_statistics import WaiterStatisticsService
 from app.services.cook_statistics import CookStatisticsService
@@ -41,9 +39,6 @@ def get_order_repository(db: Session = Depends(get_db)):
 
 def get_table_repository(db: Session = Depends(get_db)):
     return TableRepository(db)
-
-def get_category_repository(db: Session = Depends(get_db)):
-    return CategoryRepository(db)
 
 def get_order_item_repository(db: Session = Depends(get_db)):
     return OrderItemRepository(db)
@@ -81,9 +76,6 @@ def get_order_service(repo: OrderRepository = Depends(get_order_repository)):
 
 def get_table_service(repo: TableRepository = Depends(get_table_repository)):
     return TableService(repo)
-
-def get_category_service(repo: CategoryRepository = Depends(get_category_repository)):
-    return CategoryService(repo)
 
 def get_order_item_service(repo: OrderItemRepository = Depends(get_order_item_repository)):
     return OrderItemService(repo)

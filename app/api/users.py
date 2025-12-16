@@ -8,8 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/users", tags=["users"])
-
+router = APIRouter(prefix="/users", tags=["users"])
 # Login request schema
 class LoginRequest(BaseModel):
     username: str

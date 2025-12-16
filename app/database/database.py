@@ -39,7 +39,6 @@ def init_db():
     # Импортируем все модели, чтобы они зарегистрировались у Base
     from app.database.database import Base
     from app.models.admin import AdminModel
-    from app.models.categories import CategoriesModel
     from app.models.cook_statistics import CookStatisticsModel
     from app.models.cook import CookModel
     from app.models.dishes import DishesModel

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управления Platter Flowом</title>
+    <title>Система управления Platter Flow</title>
     <style>
         * {
             margin: 0;
@@ -317,6 +317,7 @@
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         .item:hover {
@@ -460,6 +461,10 @@
             z-index: 1000;
         }
 
+        .modal.hidden {
+            display: none;
+        }
+
         .modal-card {
             background: white;
             border-radius: 10px;
@@ -495,14 +500,20 @@
             justify-content: flex-end;
         }
 
-        .primary { background: #667eea; color: white; }
-        .danger { background: #e74c3c; color: white; }
-        .secondary { background: #eee; color: #333; }
-        .success { background: #27ae60; color: white; }
-        .warning { background: #f39c12; color: white; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-secondary { background: #eee; color: #333; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
 
-        button { transition: all 0.3s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn-secondary:hover,
+        .btn-primary:hover,
+        .btn-danger:hover,
+        .btn-success:hover,
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
 
         .dish-list {
             max-height: 300px;
@@ -511,6 +522,21 @@
             border-radius: 6px;
             padding: 10px;
             margin-bottom: 15px;
+        }
+
+        .dish-item {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dish-item:hover {
+            background: #f5f5f5;
+        }
+
+        .dish-item:last-child {
+            border-bottom: none;
         }
 
         @media (max-width: 768px) {
@@ -621,7 +647,7 @@
                     <div class="employees-container">
                         <div class="employees-header">
                             <h3 style="margin: 0;">Список сотрудников</h3>
-                            <button class="btn primary" style="width: auto; padding: 8px 16px; font-size: 14px;" onclick="addEmployeeModal()">➕ Добавить сотрудника</button>
+                            <button class="btn btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;" onclick="addEmployeeModal()">➕ Добавить сотрудника</button>
                         </div>
                         <table class="employees-table">
                             <thead>
@@ -637,6 +663,56 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="employeeModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Добавить сотрудника</h3>
+                <button style="background: none; border: none; font-size: 20px; cursor: pointer;" onclick="closeEmployeeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="empUsername" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="empPassword" placeholder="Введите пароль" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Роль</label>
+                        <select id="empRole" required>
+                            <option value="">Выберите роль</option>
+                            <option value="waiter">Официант</option>
+                            <option value="chef">Повар</option>
+                            <option value="admin">Админ</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeEmployeeModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="saveEmployee()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="orderModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Детали заказа</h3>
+                <button style="background: none; border: none; font-size: 20px; cursor: pointer;" onclick="closeOrderModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="orderDetails"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeOrderModal()">Закрыть</button>
             </div>
         </div>
     </div>

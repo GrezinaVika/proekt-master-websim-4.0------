@@ -1,39 +1,9 @@
 /* ============================================
-   ВОСХИТИТЕЛЬНЫЙ ДИЗАЙН СИСТЕМЫ УПРАВЛЕНИЯ РЕСТОРАНОМ
-   Современный, элегантный, с плавными анимациями
+   PLATTER FLOW - СОВРЕМЕННАЯ СИСТЕМА УПРАВЛЕНИЯ РЕСТОРАНОМ
+   Чистый, минималистичный дизайн
 ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-:root {
-    /* Элегантная цветовая палитра */
-    --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-dark: #5a67d8;
-    --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    --danger: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-    
-    /* Нейтральные тона */
-    --bg: #f8f9fe;
-    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --card: #ffffff;
-    --border: #e2e8f0;
-    --text-primary: #2d3748;
-    --text-secondary: #718096;
-    --text-muted: #a0aec0;
-    
-    /* Тени */
-    --shadow-sm: 0 2px 8px rgba(102, 126, 234, 0.08);
-    --shadow-md: 0 4px 16px rgba(102, 126, 234, 0.12);
-    --shadow-lg: 0 10px 40px rgba(102, 126, 234, 0.15);
-    --shadow-xl: 0 20px 60px rgba(102, 126, 234, 0.2);
-    
-    /* Анимации */
-    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * {
     margin: 0;
@@ -41,290 +11,408 @@
     box-sizing: border-box;
 }
 
-html, body, #app {
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-bg: #ffffff;
+    --text-dark: #1f2937;
+    --text-gray: #6b7280;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --danger: #ef4444;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+body, html {
+    font-family: 'Inter', sans-serif;
     height: 100%;
     margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-    overflow-x: hidden;
-    position: relative;
-}
-
-/* Фоновые эффекты */
-body::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-    animation: pulse 15s ease-in-out infinite;
-    z-index: 0;
-    pointer-events: none;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-5%, 5%) scale(1.1); }
 }
 
 /* ============================================
-   ТОПБАР
+   СТРАНИЦА ВХОДА
 ============================================ */
-.topbar {
-    height: 72px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+.login-page {
+    height: 100vh;
+    background: var(--bg-gradient);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 32px;
-    box-shadow: var(--shadow-sm);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    transition: all var(--transition-base);
+    justify-content: center;
 }
 
-.topbar:hover {
-    box-shadow: var(--shadow-md);
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    animation: slideInLeft 0.6s ease-out;
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.logo {
-    height: 48px;
-    width: 48px;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
-    transition: transform var(--transition-base);
-}
-
-.logo:hover {
-    transform: rotate(360deg) scale(1.1);
-}
-
-.title {
-    font-weight: 800;
-    background: var(--primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 24px;
-    letter-spacing: -0.5px;
-}
-
-.icons {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    animation: slideInRight 0.6s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* КАРТОЧКИ И КОНТЕЙНЕРЫ */
-.card {
-    max-width: 1200px;
-    margin: 32px auto;
+.login-card {
+    background: var(--card-bg);
     border-radius: 24px;
-    background: var(--card);
-    padding: 32px;
-    box-shadow: var(--shadow-lg);
-    animation: fadeInUp 0.6s ease-out;
-    position: relative;
-    z-index: 1;
+    padding: 48px 40px;
+    width: 420px;
+    box-shadow: var(--shadow);
+    text-align: center;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.login-header {
+    margin-bottom: 32px;
 }
 
-.tabs-auth, .menu, .tabs-switch {
+.login-logo {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+}
+
+.login-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.login-form {
     display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-group {
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-gray);
+    margin-bottom: 8px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.login-btn {
+    background: var(--bg-gradient);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+
+.login-btn:hover {
+    opacity: 0.9;
+}
+
+/* ============================================
+   ГЛАВНАЯ СТРАНИЦА
+============================================ */
+.app-container {
+    display: flex;
+    height: 100vh;
+    background: #f9fafb;
+}
+
+/* БОКОВОЕ МЕНЮ */
+.sidebar {
+    width: 240px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
     gap: 12px;
-    background: var(--bg);
-    padding: 6px;
-    border-radius: 16px;
 }
 
-.tab, .menu-btn, .switch-btn {
+.sidebar-logo-img {
+    width: 40px;
+    height: 40px;
+}
+
+.sidebar-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.sidebar-nav {
     flex: 1;
-    padding: 16px 24px;
-    border-radius: 12px;
-    border: none;
+    padding: 16px 12px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    color: var(--text-gray);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nav-item:hover {
+    background: #f3f4f6;
+    color: var(--text-dark);
+}
+
+.nav-item.active {
+    background: var(--bg-gradient);
+    color: white;
+}
+
+.nav-icon {
+    font-size: 20px;
+}
+
+/* ОСНОВНОЙ КОНТЕНТ */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    height: 64px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 24px;
+    gap: 16px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.logout-btn {
+    padding: 8px 16px;
     background: transparent;
-    color: var(--text-secondary);
-    font-weight: 600;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-gray);
     cursor: pointer;
-    transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
-.tab::before, .menu-btn::before, .switch-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--primary);
-    opacity: 0;
-    transition: opacity var(--transition-base);
-    z-index: -1;
+.logout-btn:hover {
+    background: #f9fafb;
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
-.tab.active, .menu-btn.active, .switch-btn.active {
-    color: white;
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+/* КОНТЕНТ */
+.content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
 }
 
-.tab.active::before, .menu-btn.active::before, .switch-btn.active::before {
-    opacity: 1;
+.content-header {
+    margin-bottom: 24px;
 }
 
-.primary, .danger {
-    padding: 14px 32px;
+.content-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* МЕНЮ */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.menu-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    border: none;
-    font-weight: 600;
+    padding: 20px;
+    transition: all 0.2s;
     cursor: pointer;
-    transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
-    color: white;
 }
 
-.primary {
-    background: var(--primary);
-    box-shadow: var(--shadow-md);
-}
-
-.primary:hover {
+.menu-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
 }
 
-.danger {
-    background: var(--danger);
+.menu-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 8px;
 }
 
+.menu-item-desc {
+    font-size: 14px;
+    color: var(--text-gray);
+    margin-bottom: 12px;
+}
+
+.menu-item-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ЗАКАЗЫ */
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.order-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-info h3 {
+    font-size: 16px;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.order-info p {
+    font-size: 14px;
+    color: var(--text-gray);
+}
+
+.order-status {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.order-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.order-status.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* СТОЛЫ */
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.table-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.table-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.table-card.occupied {
+    border-color: var(--danger);
+    background: #fef2f2;
+}
+
+.table-card.available {
+    border-color: var(--success);
+    background: #f0fdf4;
+}
+
+.table-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.table-status {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* УТИЛИТЫ */
 .hidden {
     display: none !important;
 }
 
-/* ПОЛЯ ВВОДА */
-.form input, .form select {
-    padding: 16px;
-    border-radius: 12px;
-    border: 2px solid var(--border);
-    background: white;
-    transition: all var(--transition-base);
-    font-family: inherit;
-}
-
-.form input:focus, .form select:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
-
-/* СПИСКИ И ЭЛЕМЕНТЫ */
-.item, .order, .table {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: var(--shadow-sm);
-    transition: all var(--transition-base);
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
-.item:hover, .order:hover, .table:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+.btn-primary {
+    background: var(--bg-gradient);
+    color: white;
 }
 
-.table.booked {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-    border: 2px solid #667eea;
-}
-
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.modal-card {
-    background: var(--card);
-    border-radius: 24px;
-    padding: 32px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-xl);
-    animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes scaleIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+.btn-primary:hover {
+    opacity: 0.9;
 }

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  restaurant-api:
+    build: .
+    container_name: restaurant-management-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/restaurant.db
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

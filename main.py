@@ -518,8 +518,13 @@ async def create_order(data: dict = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/orders/{order_id}")
-async def update_order(order_id: int, status: str = None, total_amount: float = None, dishes: list = None):
+async def update_order(order_id: int, data: dict = Body(...)):
     """Обновить заказ"""
+        # Extract data from JSON body
+    status = data.get('status')
+    total_amount = data.get('total_amount')
+    dishes = data.get('dishes')
+    
     try:
         conn = get_db()
         cursor = conn.cursor()

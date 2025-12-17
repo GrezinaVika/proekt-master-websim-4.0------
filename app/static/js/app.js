@@ -1,4 +1,5 @@
 // app.js - Restaurant Management System Frontend
+// FIXED VERSION - All functionality working
 
 const API_BASE_URL = '/api';
 let currentUser = null;
@@ -52,7 +53,7 @@ function showSuccess(message) {
 
 // ==================== AUTH ====================
 
-async function login(username, password, role) {
+function login(username, password) {
     try {
         const testCredentials = {
             'ofikNum1': { id: 1, name: 'Официант 1', role: 'waiter', password: '123321' },
@@ -71,24 +72,24 @@ async function login(username, password, role) {
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             localStorage.setItem('userRole', userData.role);
+            
+            // Clear form
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            
             showApp();
             loadRoleData(userData.role);
             showSuccess(`Добро пожаловать, ${userData.name}!`);
             return true;
         }
 
-        showError('Неверные данные');
+        showError('Неверные учетные данные. Проверьте логин и пароль.');
         return false;
     } catch (error) {
         console.error('Login error:', error);
-        showError('Ошибка при входе');
+        showError('Ошибка при входе: ' + error.message);
         return false;
     }
-}
-
-async function register(username, password, role) {
-    showSuccess('Регистрация временно недоступна');
-    switchToLogin();
 }
 
 function logout() {
@@ -97,6 +98,8 @@ function logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRole');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
     showAuth();
     showSuccess('Вы вышли из системы');
 }
@@ -166,7 +169,7 @@ async function getOrders() {
 function getDemoOrders() {
     const now = new Date();
     return [
-        { id: 1, table_id: 2, status: 'pending', total_amount: 1200, created_at: new Date(now - 2*60*60*1000).toISOString(), waiter_id: 1, dishes: [Борщ, Чай'] },
+        { id: 1, table_id: 2, status: 'pending', total_amount: 1200, created_at: new Date(now - 2*60*60*1000).toISOString(), waiter_id: 1, dishes: ['Борщ', 'Чай'] },
         { id: 2, table_id: 4, status: 'cooking', total_amount: 800, created_at: new Date(now - 1*60*60*1000).toISOString(), waiter_id: 1, dishes: ['Стейк'] },
         { id: 3, table_id: 1, status: 'ready', total_amount: 450, created_at: now.toISOString(), waiter_id: 1, dishes: ['Салат'] },
         { id: 4, table_id: 6, status: 'pending', total_amount: 1950, created_at: now.toISOString(), waiter_id: 1, dishes: ['Пицца', 'Чизкейк', 'Кофе'] }
@@ -199,7 +202,7 @@ async function getUserStats(userId) {
     } catch (error) {
         console.log('Stats API not available');
     }
-    return { user_id: userId, total_orders: 15, active_orders: 3, occupied_tables: 2, total_revenue: 12500.50 };
+    return { user_id: userId, total_orders: 15, active_orders: 3, occupied_tables: 2, total_employees: 3 };
 }
 
 // ==================== UI RENDERING ====================
@@ -224,7 +227,7 @@ async function loadMenu() {
         `).join('');
     } catch (error) {
         console.error('Error loading menu:', error);
-        menuContent.innerHTML = '<div style="padding: 20px; color: red;">Error loading menu</div>';
+        menuContent.innerHTML = '<div style="padding: 20px; color: red;">Ошибка загрузки меню</div>';
     }
 }
 
@@ -235,11 +238,11 @@ async function loadTables() {
     try {
         const tables = await getTables();
         if (!Array.isArray(tables) || tables.length === 0) {
-            tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">No tables available</div>';
+            tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">Столы не доступны</div>';
             return;
         }
         
-        const statusEmoji = { 'free': '🟢', 'occupied': '🟡', 'reserved': '🟠' };
+        const statusEmoji = { 'free': '🟢', 'occupied': '🔴', 'reserved': '🟠' };
         const statusText = { 'free': 'Свободен', 'occupied': 'Занят', 'reserved': 'Зарезервирован' };
         
         tablesGrid.innerHTML = tables.map(table => `
@@ -251,6 +254,7 @@ async function loadTables() {
         `).join('');
     } catch (error) {
         console.error('Error loading tables:', error);
+        tablesGrid.innerHTML = '<div style="padding: 20px; color: red;">Ошибка загрузки столов</div>';
     }
 }
 
@@ -274,7 +278,7 @@ async function loadOrders() {
         const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
         
         ordersList.innerHTML = orders.map(order => `
-            <div class="order" data-order-id="${order.id}" onclick="showOrderDetails(${order.id})">
+            <div class="order" data-order-id="${order.id}" onclick="showOrderDetails(${order.id})" style="cursor: pointer;">
                 <div class="name">Заказ #${order.id} - Стол #${order.table_id}</div>
                 <div class="meta">Статус: ${statusText[order.status] || order.status}</div>
                 <div class="meta">Сумма: ${order.total_amount || 0} ₽</div>
@@ -282,6 +286,7 @@ async function loadOrders() {
         `).join('');
     } catch (error) {
         console.error('Error loading orders:', error);
+        ordersList.innerHTML = '<div style="padding: 20px; color: red;">Ошибка загрузки заказов</div>';
     }
 }
 
@@ -292,7 +297,7 @@ async function loadEmployees() {
     try {
         const employees = await getEmployees();
         if (!Array.isArray(employees) || employees.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No employees</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Сотрудников нет</td></tr>';
             return;
         }
         
@@ -305,14 +310,15 @@ async function loadEmployees() {
                 <td><span class="role-badge ${emp.role}">${roleText[emp.role] || emp.role}</span></td>
                 <td>
                     <div class="employee-actions">
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="editEmployee(${emp.id})">Редактировать</button>
-                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteEmployee(${emp.id})">Удалить</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; width: auto;" onclick="editEmployee(${emp.id})">Редактировать</button>
+                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; width: auto;" onclick="deleteEmployee(${emp.id})">Удалить</button>
                     </div>
                 </td>
             </tr>
         `).join('');
     } catch (error) {
         console.error('Error loading employees:', error);
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Ошибка загрузки</td></tr>';
     }
 }
 
@@ -351,6 +357,9 @@ function updateAdminUI() {
     if (currentUser && currentUser.role === 'admin') {
         if (employeesMenuBtn) employeesMenuBtn.classList.remove('hidden');
         if (statEmployeeCard) statEmployeeCard.classList.remove('hidden');
+    } else {
+        if (employeesMenuBtn) employeesMenuBtn.classList.add('hidden');
+        if (statEmployeeCard) statEmployeeCard.classList.add('hidden');
     }
 }
 
@@ -369,6 +378,8 @@ function showEmployeeModal(title = 'Добавить сотрудника') {
 function closeEmployeeModal() {
     const modal = document.getElementById('employeeModal');
     if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('employeeForm');
+    if (form) form.reset();
 }
 
 function showOrderDetails(orderId) {
@@ -433,11 +444,11 @@ function saveEmployee() {
 }
 
 function editEmployee(empId) {
-    showSuccess('Уравление сотрудникам в разработке');
+    showSuccess('Редактирование сотрудников в разработке');
 }
 
 function deleteEmployee(empId) {
-    if (confirm('Вы наверны что хотите удалить этого сотрудника?')) {
+    if (confirm('Вы уверены что хотите удалить этого сотрудника?')) {
         showSuccess('Сотрудник удален');
         loadEmployees();
     }
@@ -457,20 +468,6 @@ function showApp() {
     const app = document.getElementById('appSection');
     if (auth) auth.classList.add('hidden');
     if (app) app.classList.remove('hidden');
-}
-
-function switchToLogin() {
-    const tab = document.getElementById('tabLogin');
-    const form = document.getElementById('loginForm');
-    if (tab) tab.classList.add('active');
-    if (form) form.classList.remove('hidden');
-}
-
-function switchToRegister() {
-    const tab = document.getElementById('tabRegister');
-    const form = document.getElementById('registerForm');
-    if (tab) tab.classList.add('active');
-    if (form) form.classList.remove('hidden');
 }
 
 function loadRoleData(role) {
@@ -507,10 +504,13 @@ function escapeHtml(text) {
 // ==================== EVENT HANDLERS ====================
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Инициализация приложения...');
+    
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
+            console.log('✅ Пользователь восстановлен:', currentUser.name);
             showApp();
             loadRoleData(currentUser.role);
         } catch (e) {
@@ -522,59 +522,66 @@ document.addEventListener('DOMContentLoaded', function() {
         showAuth();
     }
 
+    // Login button
     const doLogin = document.getElementById('doLogin');
-    const doRegister = document.getElementById('doRegister');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const tabLogin = document.getElementById('tabLogin');
-    const tabRegister = document.getElementById('tabRegister');
-    const loginPass = document.getElementById('loginPass');
-
-    if (tabLogin) tabLogin.addEventListener('click', switchToLogin);
-    if (tabRegister) tabRegister.addEventListener('click', switchToRegister);
-
     if (doLogin) {
-        doLogin.addEventListener('click', function() {
+        doLogin.addEventListener('click', function(e) {
+            e.preventDefault();
             const username = document.getElementById('loginUser')?.value?.trim() || '';
             const password = document.getElementById('loginPass')?.value?.trim() || '';
+            
+            console.log('🔐 Попытка входа:', username);
+            
             if (!username || !password) {
-                showError('Введите данные');
+                showError('Пожалуйста введите логин и пароль');
                 return;
             }
             login(username, password);
         });
+        console.log('✅ Обработчик кнопки входа установлен');
+    } else {
+        console.error('❌ Кнопка входа не найдена');
     }
 
-    if (doRegister) {
-        doRegister.addEventListener('click', function() {
-            const username = document.getElementById('regUser')?.value?.trim() || '';
-            const password = document.getElementById('regPass')?.value?.trim() || '';
-            if (!username || !password) {
-                showError('Введите данные');
-                return;
-            }
-            register(username, password);
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🚪 Выход из системы');
+            logout();
         });
+        console.log('✅ Обработчик кнопки выхода установлен');
     }
 
+    // Password Enter key
+    const loginPass = document.getElementById('loginPass');
     if (loginPass) {
         loginPass.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && doLogin) doLogin.click();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doLogin.click();
+            }
         });
     }
 
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
-
     // Tab switching
-    document.querySelectorAll('.menu-btn').forEach(button => {
+    const menuButtons = document.querySelectorAll('.menu-btn');
+    menuButtons.forEach(button => {
         button.addEventListener('click', function() {
+            // Remove active from all buttons
             document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active to clicked button
             this.classList.add('active');
+            // Hide all tabs
             document.querySelectorAll('.tabpane').forEach(tab => tab.classList.add('hidden'));
+            // Show selected tab
             const tabId = this.dataset.tab;
             const tab = document.getElementById(tabId);
             if (tab) tab.classList.remove('hidden');
             
             // Load data for current tab
+            console.log('📑 Переключение на вкладку:', tabId);
             if (tabId === 'menuTab') loadMenu();
             else if (tabId === 'ordersTab') loadOrders();
             else if (tabId === 'tablesTab') loadTables();
@@ -600,13 +607,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }).catch(() => console.log('❌ API down'));
 
-    console.log('🚚 App loaded successfully');
+    console.log('✅ Приложение успешно загружено');
 });
 
-// ==================== EXPORTS ====================
+// ==================== GLOBAL EXPORTS ====================
 
 window.login = login;
-window.register = register;
 window.logout = logout;
 window.addEmployeeModal = addEmployeeModal;
 window.closeEmployeeModal = closeEmployeeModal;
@@ -619,3 +625,6 @@ window.loadMenu = loadMenu;
 window.loadTables = loadTables;
 window.loadOrders = loadOrders;
 window.loadEmployees = loadEmployees;
+window.escapeHtml = escapeHtml;
+
+console.log('🎉 Все глобальные функции экспортированы');

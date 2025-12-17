@@ -44,6 +44,7 @@ templates = Jinja2Templates(directory="app/templates")
 from app.api import dishes
 from app.api import order
 from app.api import tables
+from app.api import categories
 from app.api import order_items
 from app.api import waiter_statistics
 from app.api import cook_statistics
@@ -59,6 +60,7 @@ api_prefix = "/api"
 app.include_router(dishes.router, prefix=api_prefix)
 app.include_router(order.router, prefix=api_prefix)
 app.include_router(tables.router, prefix=api_prefix)
+app.include_router(categories.router, prefix=api_prefix)
 app.include_router(order_items.router, prefix=api_prefix)
 app.include_router(waiter_statistics.router, prefix=api_prefix)
 app.include_router(cook_statistics.router, prefix=api_prefix)

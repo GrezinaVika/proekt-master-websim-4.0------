@@ -1,5 +1,5 @@
 // app.js - Restaurant Management System Frontend
-// COMPLETE REFACTOR - ALL ISSUES FIXED
+// FINAL VERSION - ALL BUGS FIXED
 
 const API_BASE_URL = '/api';
 let currentUser = null;
@@ -132,7 +132,6 @@ function logout() {
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     showAuth();
-    showSuccess('Вы вышли из системы');
 }
 
 // ==================== DATA FETCH ====================
@@ -245,8 +244,8 @@ async function loadTables() {
         const statusText = { 'free': 'Свободен', 'occupied': 'Занят', 'reserved': 'Зарезервирован' };
         
         tablesGrid.innerHTML = tables.map(table => `
-            <div class="item table ${table.status === 'occupied' ? 'booked' : ''}" data-table-id="${table.id}" onclick="showTableActions(${table.id})" style="cursor: pointer;">
-                <div class="name">Стол #${table.table_number || table.id}</div>
+            <div class="item table ${table.status === 'occupied' ? 'booked' : ''}" data-table-id="${table.id}" onclick="showCreateOrderForTable(${table.id})" style="cursor: pointer;">
+                <div class="name">Стол ${table.table_number || table.id}</div>
                 <div class="desc">${escapeHtml(table.location || '')}</div>
                 <div class="meta">${statusEmoji[table.status] || '🟢'} ${statusText[table.status] || table.status} (${table.capacity} мест)</div>
             </div>
@@ -279,15 +278,15 @@ async function loadOrders() {
         const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
         
         ordersList.innerHTML = orders.map(order => `
-            <div class="order" data-order-id="${order.id}" style="cursor: pointer;">
-                <div class="name">Заказ #${order.id} - Стол #${order.table_id}</div>
-                <div class="meta">Статус: <span style="color: #667eea; font-weight: bold;">${statusText[order.status] || order.status}</span></div>
-                <div class="meta">Сумма: <span style="color: #27ae60; font-weight: bold;">${order.total_amount || 0} ₽</span></div>
-                <div style="margin-top: 10px; display: flex; gap: 6px;">
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; flex: 1; width: auto;" onclick="event.stopPropagation(); showOrderDetails(${order.id})">View</button>
+            <div class="order" data-order-id="${order.id}" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                <div class="name" style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">Заказ ${order.id} - Стол ${order.table_id}</div>
+                <div class="meta" style="margin-bottom: 5px;">Статус: <span style="color: #667eea; font-weight: bold;">${statusText[order.status] || order.status}</span></div>
+                <div class="meta" style="margin-bottom: 12px;">Сумма: <span style="color: #27ae60; font-weight: bold;">${order.total_amount || 0} ₽</span></div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; flex: 1; min-width: 80px;" onclick="showOrderDetails(${order.id})">View</button>
                     ${currentUser && currentUser.role !== 'chef' ? `
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; flex: 1; width: auto;" onclick="event.stopPropagation(); showEditOrderModal(${order.id})">Edit</button>
-                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; flex: 1; width: auto;" onclick="event.stopPropagation(); completeOrder(${order.id})">Complete</button>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; flex: 1; min-width: 80px;" onclick="showEditOrderModal(${order.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; flex: 1; min-width: 80px;" onclick="completeOrder(${order.id})">Complete</button>
                     ` : ''}
                 </div>
             </div>
@@ -378,7 +377,7 @@ function updateAdminUI() {
 
 function showAddDishModal() {
     editingDishId = null;
-    openDishModal('Добавить блюдо', '', 0, '', 15);
+    openDishModal('Добавить блюдо', '', '', '', 15);
 }
 
 function showEditDishModal(dishId, name, price, category, cookingTime) {
@@ -387,46 +386,42 @@ function showEditDishModal(dishId, name, price, category, cookingTime) {
 }
 
 function openDishModal(title, name, price, category, cookingTime) {
-    // Create a proper form for dishes
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'dishFormModal';
+    modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;';
     modal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: auto; margin-top: 50px;">
-            <h2 style="margin-top: 0;">${title}</h2>
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 400px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333;">${title}</h2>
             <form id="dishForm" onsubmit="event.preventDefault(); saveDish();">
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Наименование блюда:</label>
-                    <input type="text" id="dishName" value="${escapeHtml(name)}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Наименование:</label>
+                    <input type="text" id="dishName" value="${escapeHtml(String(name))}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Цена (₽):</label>
-                    <input type="number" id="dishPrice" value="${price}" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Цена (₽):</label>
+                    <input type="number" id="dishPrice" value="${price}" step="0.01" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Категория:</label>
-                    <input type="text" id="dishCategory" value="${escapeHtml(category)}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Категория:</label>
+                    <input type="text" id="dishCategory" value="${escapeHtml(String(category))}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Время приготовления (мин):</label>
-                    <input type="number" id="dishTime" value="${cookingTime}" min="1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Время приготовления (мин):</label>
+                    <input type="number" id="dishTime" value="${cookingTime}" min="1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Сохранить</button>
-                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeDishModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="closeDishModal()">Отмена</button>
                 </div>
             </form>
         </div>
     `;
     
-    // Remove old modal if exists
     const oldModal = document.getElementById('dishFormModal');
     if (oldModal) oldModal.remove();
     
     document.body.appendChild(modal);
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
     modal.onclick = function(e) {
         if (e.target === this) closeDishModal();
     };
@@ -449,25 +444,22 @@ async function saveDish() {
     }
     
     try {
+        const dishData = {
+            name: name,
+            price: price,
+            category: category,
+            cooking_time: cookingTime
+        };
+        
         if (editingDishId) {
-            await apiRequest(`/dishes/${editingDishId}`, 'PUT', {
-                name: name,
-                price: price,
-                category: category,
-                cooking_time: cookingTime
-            });
+            await apiRequest(`/dishes/${editingDishId}`, 'PUT', dishData);
             showSuccess('Блюдо обновлено');
         } else {
-            await apiRequest('/dishes/', 'POST', {
-                name: name,
-                price: price,
-                category: category,
-                cooking_time: cookingTime
-            });
+            await apiRequest('/dishes/', 'POST', dishData);
             showSuccess('Блюдо добавлено');
         }
         closeDishModal();
-        loadMenu();
+        await loadMenu(); // Обновляем меню мгновенно
     } catch (error) {
         showError('Ошибка: ' + error.message);
     }
@@ -478,55 +470,86 @@ async function deleteDish(dishId) {
         try {
             await apiRequest(`/dishes/${dishId}`, 'DELETE');
             showSuccess('Блюдо удалено');
-            loadMenu();
+            await loadMenu();
         } catch (error) {
             showError('Ошибка удаления: ' + error.message);
         }
     }
 }
 
-// ==================== TABLE ACTIONS ====================
+// ==================== TABLE & ORDER MANAGEMENT ====================
 
-function showTableActions(tableId) {
+function showCreateOrderForTable(tableId) {
     selectedTableId = tableId;
-    const actions = prompt(
-        'Что вы хотите сделать со столом?\n1 - Создать заказ\n2 - Освободить стол\n\nВведите номер действия (1 или 2):'
-    );
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'createOrderModal';
+    modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;';
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333;">Создать заказ для стола ${tableId}</h2>
+            <form id="orderForm" onsubmit="event.preventDefault(); createOrder();">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Блюда (через запятую, например: Пицца, Салат):</label>
+                    <textarea id="orderDishes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit;" required placeholder="Введите названия блюд..."></textarea>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Сумма (₽):</label>
+                    <input type="number" id="orderAmount" step="0.01" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">Создать</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="closeCreateOrderModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    `;
     
-    if (actions === '1') {
-        showCreateOrderModal(tableId);
-    } else if (actions === '2') {
-        clearTable(tableId);
+    const oldModal = document.getElementById('createOrderModal');
+    if (oldModal) oldModal.remove();
+    
+    document.body.appendChild(modal);
+    modal.onclick = function(e) {
+        if (e.target === this) closeCreateOrderModal();
+    };
+}
+
+function closeCreateOrderModal() {
+    const modal = document.getElementById('createOrderModal');
+    if (modal) modal.remove();
+}
+
+async function createOrder() {
+    const dishesInput = document.getElementById('orderDishes')?.value?.trim();
+    const amount = parseFloat(document.getElementById('orderAmount')?.value || 0);
+    
+    if (!dishesInput || !amount) {
+        showError('Заполните все поля');
+        return;
+    }
+    
+    const dishes = dishesInput.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    
+    if (dishes.length === 0) {
+        showError('Укажите хотя бы одно блюдо');
+        return;
+    }
+    
+    try {
+        await apiRequest('/orders/', 'POST', {
+            table_id: selectedTableId,
+            dishes: dishes,
+            total_amount: amount,
+            status: 'pending'
+        });
+        showSuccess('Заказ создан!');
+        closeCreateOrderModal();
+        await loadOrders();
+        await loadTables();
+    } catch (error) {
+        showError('Ошибка: ' + error.message);
     }
 }
-
-async function clearTable(tableId) {
-    if (confirm('Вы уверены? Это удалит все заказы со стола.')) {
-        try {
-            // Get orders for this table
-            const orders = await getOrders();
-            const tableOrders = orders.filter(o => o.table_id === tableId);
-            
-            // Delete all orders for this table
-            for (let order of tableOrders) {
-                await apiRequest(`/orders/${order.id}`, 'DELETE');
-            }
-            
-            showSuccess('Стол освобожден');
-            loadTables();
-            loadOrders();
-        } catch (error) {
-            showError('Ошибка: ' + error.message);
-        }
-    }
-}
-
-function showCreateOrderModal(tableId) {
-    // For now, show simple order creation
-    showSuccess(`Функция создания заказа для стола ${tableId} будет реализована через API`);
-}
-
-// ==================== ORDER MANAGEMENT ====================
 
 function showOrderDetails(orderId) {
     getOrders().then(orders => {
@@ -548,11 +571,11 @@ function showOrderDetails(orderId) {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
                             <p style="margin: 0 0 8px 0; font-size: 12px; color: #999; text-transform: uppercase; font-weight: bold;">Номер заказа</p>
-                            <h3 style="margin: 0; font-size: 24px; color: #667eea;">#${order.id}</h3>
+                            <h3 style="margin: 0; font-size: 24px; color: #667eea;">${order.id}</h3>
                         </div>
                         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
                             <p style="margin: 0 0 8px 0; font-size: 12px; color: #999; text-transform: uppercase; font-weight: bold;">Стол</p>
-                            <h3 style="margin: 0; font-size: 24px; color: #667eea;">#${order.table_id}</h3>
+                            <h3 style="margin: 0; font-size: 24px; color: #667eea;">${order.table_id}</h3>
                         </div>
                     </div>
                     
@@ -588,17 +611,103 @@ function showOrderDetails(orderId) {
 }
 
 function showEditOrderModal(orderId) {
-    editingOrderId = orderId;
-    showSuccess(`Редактирование заказа ${orderId} будет реализовано через API`);
+    getOrders().then(orders => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) {
+            showError('Заказ не найден');
+            return;
+        }
+        
+        editingOrderId = orderId;
+        const dishesStr = Array.isArray(order.dishes) ? order.dishes.join(', ') : '';
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'editOrderModal';
+        modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;';
+        modal.innerHTML = `
+            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h2 style="margin-top: 0; margin-bottom: 20px; color: #333;">Редактировать заказ ${orderId}</h2>
+                <form id="editOrderForm" onsubmit="event.preventDefault(); updateOrder();">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Блюда (через запятую):</label>
+                        <textarea id="editOrderDishes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit;" required>${escapeHtml(dishesStr)}</textarea>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Сумма (₽):</label>
+                        <input type="number" id="editOrderAmount" step="0.01" min="0" value="${order.total_amount}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Статус:</label>
+                        <select id="editOrderStatus" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Ожидание</option>
+                            <option value="cooking" ${order.status === 'cooking' ? 'selected' : ''}>Приготовление</option>
+                            <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Выдан</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">Сохранить</button>
+                        <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="closeEditOrderModal()">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        const oldModal = document.getElementById('editOrderModal');
+        if (oldModal) oldModal.remove();
+        
+        document.body.appendChild(modal);
+        modal.onclick = function(e) {
+            if (e.target === this) closeEditOrderModal();
+        };
+    });
+}
+
+function closeEditOrderModal() {
+    const modal = document.getElementById('editOrderModal');
+    if (modal) modal.remove();
+}
+
+async function updateOrder() {
+    const dishesInput = document.getElementById('editOrderDishes')?.value?.trim();
+    const amount = parseFloat(document.getElementById('editOrderAmount')?.value || 0);
+    const status = document.getElementById('editOrderStatus')?.value;
+    
+    if (!dishesInput || !amount || !status) {
+        showError('Заполните все поля');
+        return;
+    }
+    
+    const dishes = dishesInput.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    
+    if (dishes.length === 0) {
+        showError('Укажите хотя бы одно блюдо');
+        return;
+    }
+    
+    try {
+        await apiRequest(`/orders/${editingOrderId}`, 'PUT', {
+            dishes: dishes,
+            total_amount: amount,
+            status: status
+        });
+        showSuccess('Заказ обновлен!');
+        closeEditOrderModal();
+        await loadOrders();
+        await loadTables();
+    } catch (error) {
+        showError('Ошибка: ' + error.message);
+    }
 }
 
 async function completeOrder(orderId) {
     if (confirm('Завершить этот заказ?')) {
         try {
             await apiRequest(`/orders/${orderId}`, 'DELETE');
-            showSuccess('Заказ завершен и удален');
-            loadOrders();
-            loadTables();
+            showSuccess('Заказ завершен');
+            await loadOrders();
+            await loadTables();
         } catch (error) {
             showError('Ошибка: ' + error.message);
         }
@@ -618,45 +727,46 @@ function addEmployeeModal() {
         return;
     }
     editingEmployeeId = null;
-    openEmployeeForm('Добавить сотрудника', '', '', '', 'waiter', true);
+    openEmployeeForm('Добавить сотрудника', '', '', 'waiter', true);
 }
 
 function showEditEmployeeModal(empId, username, name, role) {
     editingEmployeeId = empId;
-    openEmployeeForm('Обновить сотрудника', username, name, role, role, false);
+    openEmployeeForm('Обновить сотрудника', username, name, role, false);
 }
 
-function openEmployeeForm(title, username, name, role, defaultRole, isNew) {
+function openEmployeeForm(title, username, name, role, isNew) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'employeeFormModal';
+    modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 9999;';
     modal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: auto; margin-top: 50px;">
-            <h2 style="margin-top: 0;">${title}</h2>
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 400px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333;">${title}</h2>
             <form id="empForm" onsubmit="event.preventDefault(); saveEmployee();">
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Логин:</label>
-                    <input type="text" id="empUsername" value="${escapeHtml(username)}" ${!isNew ? 'disabled' : 'required'} style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Логин:</label>
+                    <input type="text" id="empUsername" value="${escapeHtml(username)}" ${!isNew ? 'disabled' : 'required'} style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Имя:</label>
-                    <input type="text" id="empName" value="${escapeHtml(name)}" ${isNew ? 'required' : ''} style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Имя:</label>
+                    <input type="text" id="empName" value="${escapeHtml(name)}" ${isNew ? 'required' : ''} style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Роль:</label>
-                    <select id="empRole" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Роль:</label>
+                    <select id="empRole" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;" required>
                         <option value="waiter" ${role === 'waiter' ? 'selected' : ''}>Официант</option>
                         <option value="chef" ${role === 'chef' ? 'selected' : ''}>Повар</option>
                         <option value="admin" ${role === 'admin' ? 'selected' : ''}>Администратор</option>
                     </select>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Пароль:</label>
-                    <input type="password" id="empPassword" ${isNew ? 'required' : ''} placeholder="${isNew ? 'Обязательно' : 'Оставьте пусто, чтобы не менять'}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Пароль:</label>
+                    <input type="password" id="empPassword" ${isNew ? 'required' : ''} placeholder="${isNew ? 'Обязательно' : 'Оставьте пусто, чтобы не менять'}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px;">
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Сохранить</button>
-                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeEmployeeForm()">Отмена</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1; padding: 10px;" onclick="closeEmployeeForm()">Отмена</button>
                 </div>
             </form>
         </div>
@@ -666,17 +776,6 @@ function openEmployeeForm(title, username, name, role, defaultRole, isNew) {
     if (oldModal) oldModal.remove();
     
     document.body.appendChild(modal);
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.zIndex = '9999';
-    
     modal.onclick = function(e) {
         if (e.target === this) closeEmployeeForm();
     };
@@ -724,7 +823,7 @@ async function saveEmployee() {
             showSuccess('Сотрудник добавлен');
         }
         closeEmployeeForm();
-        loadEmployees();
+        await loadEmployees();
     } catch (error) {
         showError('Ошибка: ' + error.message);
     }
@@ -735,7 +834,7 @@ async function deleteEmployee(empId) {
         try {
             await apiRequest(`/employees/${empId}`, 'DELETE');
             showSuccess('Сотрудник удален');
-            loadEmployees();
+            await loadEmployees();
         } catch (error) {
             showError('Ошибка удаления: ' + error.message);
         }
@@ -788,21 +887,9 @@ function escapeHtml(text) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Приложение загружается...');
     
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            authToken = localStorage.getItem('authToken');
-            showApp();
-            loadRoleData(currentUser.role);
-        } catch (e) {
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('authToken');
-            showAuth();
-        }
-    } else {
-        showAuth();
-    }
+    // IMPORTANT: ALWAYS SHOW LOGIN SCREEN ON LOAD
+    showAuth();
+    console.log('🔑 Открыта страница входа');
     
     const doLogin = document.getElementById('doLogin');
     if (doLogin) {
@@ -878,6 +965,8 @@ window.deleteEmployee = deleteEmployee;
 window.showOrderDetails = showOrderDetails;
 window.closeOrderModal = closeOrderModal;
 window.showEditOrderModal = showEditOrderModal;
+window.closeEditOrderModal = closeEditOrderModal;
+window.updateOrder = updateOrder;
 window.completeOrder = completeOrder;
 window.showAddDishModal = showAddDishModal;
 window.showEditDishModal = showEditDishModal;
@@ -889,5 +978,6 @@ window.loadTables = loadTables;
 window.loadOrders = loadOrders;
 window.loadEmployees = loadEmployees;
 window.escapeHtml = escapeHtml;
-window.showTableActions = showTableActions;
-window.clearTable = clearTable;
+window.showCreateOrderForTable = showCreateOrderForTable;
+window.closeCreateOrderModal = closeCreateOrderModal;
+window.createOrder = createOrder;

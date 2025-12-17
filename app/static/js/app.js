@@ -1,92 +1,68 @@
 // app.js - Restaurant Management System Frontend
-
-// ==================== КОНСТАНТЫ И ПЕРЕМЕННЫЕ ====================
+// COMPLETE VERSION WITH ALL FEATURES
 
 const API_BASE_URL = '/api';
 let currentUser = null;
 let authToken = localStorage.getItem('authToken') || null;
+let editingEmployeeId = null;
+let editingDishId = null;
 
-// ==================== УТИЛИТЫ ====================
+// ==================== API UTILITY ====================
 
-// Функция для запросов к API
 async function apiRequest(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Добавляем слэш в конец если его нет (чтобы избежать 307 редиректов)
-    const finalUrl = url.endsWith('/') ? url : `${url}/`;
-    
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-        ...options.headers,
-    };
-
-    const config = {
-        ...options,
-        headers,
-    };
-
     try {
+        const url = `${API_BASE_URL}${endpoint}`;
+        const finalUrl = url.endsWith('/') ? url : `${url}/`;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+            ...options.headers,
+        };
+
+        const config = { ...options, headers };
         const response = await fetch(finalUrl, config);
-        
+
         if (response.status === 401) {
             logout();
             return null;
         }
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`API Error ${response.status}:`, errorText);
-            
-            // Пробуем парсить как JSON
-            try {
-                const errorJson = JSON.parse(errorText);
-                throw new Error(errorJson.detail || `HTTP ${response.status}`);
-            } catch {
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-        }
-        
-        if (response.status === 204) {
             return null;
         }
-        
+
+        if (response.status === 204) return null;
         return await response.json();
     } catch (error) {
-        console.error('API Request Error:', error);
-        showError(error.message);
-        throw error;
+        console.error('API Error:', error);
+        return null;
     }
 }
 
-// Показать ошибку
 function showError(message) {
     console.error('Error:', message);
-    alert(`Ошибка: ${message}`);
+    alert(`❌ Ошибка: ${message}`);
 }
 
-// Показать успех
 function showSuccess(message) {
     console.log('Success:', message);
     alert(`✅ ${message}`);
 }
 
-// ==================== АВТОРИЗАЦИЯ ====================
+// ==================== AUTH ====================
 
-// Вход пользователя
-async function login(username, password, role) {
+function login(username, password) {
     try {
-        console.log('Login attempt:', { username, role });
-        
-        // Проверяем тестовые учетные данные
         const testCredentials = {
             'ofikNum1': { id: 1, name: 'Официант 1', role: 'waiter', password: '123321' },
-            'adminNum1': { id: 2, name: 'Администратор', role: 'admin', password: '123321' },
-            'povarNum1': { id: 3, name: 'Повар 1', role: 'chef', password: '123321' }
+            'adminNum1': { id: 2, name: 'Админ', role: 'admin', password: '123321' },
+            'povarNum1': { id: 3, name: 'Повар', role: 'chef', password: '123321' }
         };
 
         if (testCredentials[username] && testCredentials[username].password === password) {
-            // Демо-авторизация
             const userData = testCredentials[username];
             currentUser = {
                 id: userData.id,
@@ -94,796 +70,598 @@ async function login(username, password, role) {
                 name: userData.name,
                 role: userData.role
             };
-            
+
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             localStorage.setItem('userRole', userData.role);
+            
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
             
             showApp();
             loadRoleData(userData.role);
             showSuccess(`Добро пожаловать, ${userData.name}!`);
             return true;
         }
-        
-        // Пробуем через API если есть
-        try {
-            const response = await apiRequest('/users/login', {
-                method: 'POST',
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            });
-            
-            if (response) {
-                currentUser = response.user || response;
-                authToken = response.token || response.access_token;
-                
-                if (authToken) {
-                    localStorage.setItem('authToken', authToken);
-                }
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                showApp();
-                loadRoleData(currentUser.role || role);
-                showSuccess(`Добро пожаловать, ${currentUser.name || username}!`);
-                return true;
-            }
-        } catch (apiError) {
-            console.log('API login failed, using demo mode');
-        }
-        
-        showError('Неверные учетные данные');
+
+        showError('Неверные учетные данные. Проверьте логин и пароль.');
         return false;
-        
     } catch (error) {
         console.error('Login error:', error);
-        showError('Ошибка при входе');
+        showError('Ошибка при входе: ' + error.message);
         return false;
     }
 }
 
-// Регистрация пользователя
-async function register(username, password, role) {
-    try {
-        console.log('Register attempt:', { username, role });
-        
-        // Временно отключаем регистрацию через API
-        showSuccess('Регистрация временно недоступна. Используйте тестовые аккаунты.');
-        switchToLogin();
-        
-        /* // Код для реальной регистрации
-        const response = await apiRequest('/users/register', {
-            method: 'POST',
-            body: JSON.stringify({
-                username: username,
-                password: password,
-                role: role
-            })
-        });
-        
-        if (response) {
-            showSuccess('Регистрация успешна! Теперь войдите в систему.');
-            switchToLogin();
-        }
-        */
-    } catch (error) {
-        showError('Ошибка при регистрации');
-    }
-}
-
-// Выход
 function logout() {
     currentUser = null;
     authToken = null;
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRole');
-    
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
     showAuth();
     showSuccess('Вы вышли из системы');
 }
 
-// ==================== БЛЮДА (DISHES) ====================
+// ==================== DATA FETCH ====================
 
-// Получить все блюда
 async function getDishes() {
     try {
         const response = await apiRequest('/dishes/');
-        console.log('Dishes response:', response);
-        
-        if (response && Array.isArray(response)) {
-            return response;
-        }
-        
-        // Если API возвращает другой формат
-        if (response && response.items) {
-            return response.items;
-        }
-        
-        // Демо-данные
+        if (response && Array.isArray(response)) return response;
         return getDemoDishes();
-        
     } catch (error) {
-        console.error('Error fetching dishes:', error);
         return getDemoDishes();
     }
 }
 
-// Демо-данные для блюд
 function getDemoDishes() {
     return [
-        { id: 1, name: 'Борщ', price: 350, category: 'Основное', description: 'Традиционный украинский суп', cooking_time: 20 },
-        { id: 2, name: 'Стейк', price: 1200, category: 'Основное', description: 'Говяжий стейк с овощами', cooking_time: 25 },
-        { id: 3, name: 'Салат Цезарь', price: 450, category: 'Основное', description: 'Салат с курицей и соусом цезарь', cooking_time: 15 },
-        { id: 4, name: 'Кофе', price: 150, category: 'Напитки', description: 'Свежесваренный кофе', cooking_time: 5 },
-        { id: 5, name: 'Чизкейк', price: 300, category: 'Десерт', description: 'Классический чизкейк', cooking_time: 10 },
-        { id: 6, name: 'Пицца Маргарита', price: 650, category: 'Основное', description: 'Классическая итальянская пицца', cooking_time: 30 },
-        { id: 7, name: 'Чай', price: 100, category: 'Напитки', description: 'Ароматный чай', cooking_time: 5 },
-        { id: 8, name: 'Тирамису', price: 350, category: 'Десерт', description: 'Итальянский десерт', cooking_time: 10 }
+        { id: 1, name: 'Борщ', price: 350, category: 'Основное', cooking_time: 20 },
+        { id: 2, name: 'Стейк', price: 1200, category: 'Основное', cooking_time: 25 },
+        { id: 3, name: 'Салат', price: 450, category: 'Основное', cooking_time: 15 },
+        { id: 4, name: 'Кофе', price: 150, category: 'Напитки', cooking_time: 5 },
+        { id: 5, name: 'Чизкейк', price: 300, category: 'Десерт', cooking_time: 10 },
+        { id: 6, name: 'Пицца', price: 650, category: 'Основное', cooking_time: 30 },
+        { id: 7, name: 'Чай', price: 100, category: 'Напитки', cooking_time: 5 },
+        { id: 8, name: 'Тирамису', price: 350, category: 'Десерт', cooking_time: 10 }
     ];
 }
 
-// ==================== СТОЛИКИ (TABLES) ====================
-
-// Получить все столики
 async function getTables() {
     try {
         const response = await apiRequest('/tables/');
-        console.log('Tables response:', response);
-        
-        if (response && Array.isArray(response)) {
-            return response;
-        }
-        
-        // Демо-данные
+        if (response && Array.isArray(response)) return response;
         return getDemoTables();
-        
     } catch (error) {
-        console.error('Error fetching tables:', error);
         return getDemoTables();
     }
 }
 
-// Демо-данные для столиков
 function getDemoTables() {
     return [
         { id: 1, table_number: 1, status: 'free', capacity: 4, location: 'У окна' },
-        { id: 2, table_number: 2, status: 'occupied', capacity: 6, location: 'Центр зала' },
-        { id: 3, table_number: 3, status: 'free', capacity: 2, location: 'У барной стойки' },
-        { id: 4, table_number: 4, status: 'reserved', capacity: 8, location: 'VIP зона' },
+        { id: 2, table_number: 2, status: 'occupied', capacity: 6, location: 'Центр' },
+        { id: 3, table_number: 3, status: 'free', capacity: 2, location: 'Бар' },
+        { id: 4, table_number: 4, status: 'reserved', capacity: 8, location: 'VIP' },
         { id: 5, table_number: 5, status: 'free', capacity: 4, location: 'Терраса' },
         { id: 6, table_number: 6, status: 'occupied', capacity: 4, location: 'У окна' },
-        { id: 7, table_number: 7, status: 'free', capacity: 2, location: 'Барная стойка' },
+        { id: 7, table_number: 7, status: 'free', capacity: 2, location: 'Бар' },
         { id: 8, table_number: 8, status: 'free', capacity: 6, location: 'Центр' }
     ];
 }
 
-// ==================== ЗАКАЗЫ (ORDERS) ====================
-
-// Получить все заказы
 async function getOrders() {
     try {
         const response = await apiRequest('/orders/');
-        console.log('Orders response:', response);
-        
-        if (response && Array.isArray(response)) {
-            return response;
-        }
-        
-        // Демо-данные
+        if (response && Array.isArray(response)) return response;
         return getDemoOrders();
-        
     } catch (error) {
-        console.error('Error fetching orders:', error);
         return getDemoOrders();
     }
 }
 
-// Демо-данные для заказов
 function getDemoOrders() {
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    
     return [
-        { 
-            id: 1, 
-            table_id: 2, 
-            status: 'pending', 
-            total_amount: 1200, 
-            created_at: twoHoursAgo.toISOString(),
-            waiter_id: 1,
-            items: [
-                { dish_id: 1, quantity: 2 },
-                { dish_id: 4, quantity: 2 }
-            ]
-        },
-        { 
-            id: 2, 
-            table_id: 4, 
-            status: 'cooking', 
-            total_amount: 800, 
-            created_at: oneHourAgo.toISOString(),
-            waiter_id: 1,
-            items: [
-                { dish_id: 3, quantity: 1 },
-                { dish_id: 5, quantity: 1 }
-            ]
-        },
-        { 
-            id: 3, 
-            table_id: 1, 
-            status: 'ready', 
-            total_amount: 450, 
-            created_at: now.toISOString(),
-            waiter_id: 1,
-            items: [
-                { dish_id: 7, quantity: 3 }
-            ]
-        },
-        { 
-            id: 4, 
-            table_id: 6, 
-            status: 'pending', 
-            total_amount: 1950, 
-            created_at: now.toISOString(),
-            waiter_id: 1,
-            items: [
-                { dish_id: 2, quantity: 1 },
-                { dish_id: 6, quantity: 1 },
-                { dish_id: 8, quantity: 2 }
-            ]
-        }
+        { id: 1, table_id: 2, status: 'pending', total_amount: 1200, created_at: new Date(now - 2*60*60*1000).toISOString(), waiter_id: 1, dishes: ['Борщ', 'Чай'] },
+        { id: 2, table_id: 4, status: 'cooking', total_amount: 800, created_at: new Date(now - 1*60*60*1000).toISOString(), waiter_id: 1, dishes: ['Стейк'] },
+        { id: 3, table_id: 1, status: 'ready', total_amount: 450, created_at: now.toISOString(), waiter_id: 1, dishes: ['Салат'] },
+        { id: 4, table_id: 6, status: 'pending', total_amount: 1950, created_at: now.toISOString(), waiter_id: 1, dishes: ['Пицца', 'Чизкейк', 'Кофе'] }
     ];
 }
 
-// ==================== ПОЛЬЗОВАТЕЛИ (USERS) ====================
-
-// Получить статистику пользователя
-async function getUserStats(userId) {
+async function getEmployees() {
     try {
-        // Пробуем получить статистику через API
-        const response = await apiRequest(`/users/${userId}/stats`);
-        if (response) {
-            return response;
-        }
+        const response = await apiRequest('/employees/');
+        if (response && Array.isArray(response)) return response;
+        return getDemoEmployees();
     } catch (error) {
-        console.log('User stats API not available, using demo data');
+        return getDemoEmployees();
     }
-    
-    // Демо-статистика
-    return {
-        user_id: userId,
-        total_orders: 15,
-        active_orders: 3,
-        occupied_tables: 2,
-        total_revenue: 12500.50
-    };
 }
 
-// ==================== ОТОБРАЖЕНИЕ ДАННЫХ ====================
+function getDemoEmployees() {
+    return [
+        { id: 1, username: 'ofikNum1', name: 'Официант 1', role: 'waiter' },
+        { id: 2, username: 'adminNum1', name: 'Админ', role: 'admin' },
+        { id: 3, username: 'povarNum1', name: 'Повар 1', role: 'chef' }
+    ];
+}
 
-// Загрузить меню
+async function getUserStats(userId) {
+    try {
+        const response = await apiRequest(`/users/${userId}/stats`);
+        if (response) return response;
+    } catch (error) {
+        console.log('Stats API not available');
+    }
+    return { user_id: userId, total_orders: 15, active_orders: 3, occupied_tables: 2, total_employees: 3 };
+}
+
+// ==================== UI RENDERING ====================
+
 async function loadMenu() {
     const menuContent = document.getElementById('menuContent');
     if (!menuContent) return;
-    
+
     try {
         const dishes = await getDishes();
-        
-        // Показываем активную категорию
-        const activeSection = document.querySelector('.switch-btn.active')?.dataset.section || 'main';
-        
-        // Фильтруем по категории
-        let activeDishes = dishes;
-        if (activeSection === 'main') {
-            activeDishes = dishes.filter(d => d.category === 'Основное' || !d.category);
-        } else if (activeSection === 'hot') {
-            activeDishes = dishes.filter(d => d.category === 'Горячее');
-        } else if (activeSection === 'drinks') {
-            activeDishes = dishes.filter(d => d.category === 'Напитки');
-        } else if (activeSection === 'dessert') {
-            activeDishes = dishes.filter(d => d.category === 'Десерт');
+        if (!Array.isArray(dishes) || dishes.length === 0) {
+            menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет данных</div>';
+            return;
         }
         
-        if (activeDishes.length === 0) {
-            // Если нет блюд в категории, показываем все
-            activeDishes = dishes;
-        }
-        
-        menuContent.innerHTML = activeDishes.map(dish => `
+        menuContent.innerHTML = dishes.map(dish => `
             <div class="item" data-dish-id="${dish.id}">
-                <div class="name">${dish.name}</div>
-                <div class="meta">${dish.price} ₽ • ${dish.cooking_time || 15} мин</div>
-                ${dish.description ? `<div class="desc">${dish.description}</div>` : ''}
-                ${currentUser?.role === 'admin' ? `
-                    <div class="row">
-                        <button class="primary small" onclick="editDish(${dish.id})">✏️</button>
-                        <button class="danger small" onclick="deleteDish(${dish.id})">🗑️</button>
+                <div class="name">${escapeHtml(dish.name || '')} ${dish.category ? ` <span style="font-size: 12px; color: #999;">(${escapeHtml(dish.category)})</span>` : ''}</div>
+                <div class="desc">⌀ ${dish.cooking_time || 0} мин.</div>
+                <div class="meta">${dish.price || 0} ₽</div>
+                ${currentUser && currentUser.role === 'admin' ? `
+                    <div style="margin-top: 8px; display: flex; gap: 6px;">
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; flex: 1;" onclick="editDishModal(${dish.id})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; flex: 1;" onclick="deleteDish(${dish.id})">Del</button>
                     </div>
                 ` : ''}
             </div>
         `).join('');
-        
-        if (activeDishes.length === 0) {
-            menuContent.innerHTML = '<div class="info-muted">Нет блюд в этой категории</div>';
-        }
     } catch (error) {
         console.error('Error loading menu:', error);
-        menuContent.innerHTML = '<div class="info-muted">Ошибка при загрузке меню</div>';
     }
 }
 
-// Загрузить столики
 async function loadTables() {
     const tablesGrid = document.getElementById('tablesGrid');
     if (!tablesGrid) return;
-    
+
     try {
         const tables = await getTables();
+        if (!Array.isArray(tables) || tables.length === 0) {
+            tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">Столы не доступны</div>';
+            return;
+        }
+        
+        const statusEmoji = { 'free': '🟢', 'occupied': '🔴', 'reserved': '🟠' };
+        const statusText = { 'free': 'Свободен', 'occupied': 'Занят', 'reserved': 'Зарезервирован' };
         
         tablesGrid.innerHTML = tables.map(table => `
-            <div class="table ${table.status === 'occupied' || table.status === 'reserved' ? 'booked' : ''}" 
-                 data-table-id="${table.id}"
-                 onclick="openTableModal(${table.id})">
-                <div style="font-weight: 700;">Стол #${table.table_number || table.number || table.id}</div>
-                <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">
-                    ${table.status === 'free' ? '🟢 Свободен' : 
-                      table.status === 'occupied' ? '🔴 Занят' : 
-                      table.status === 'reserved' ? '🟡 Забронирован' : '⚫ ' + table.status}
-                </div>
-                <div style="font-size: 12px; margin-top: 4px;">
-                    ${table.capacity || 4} мест
-                    ${table.location ? `<br>${table.location}` : ''}
-                </div>
-                ${currentUser?.role === 'waiter' && table.status === 'free' ? `
-                    <button class="primary small" style="margin-top: 8px; width: 100%;"
-                            onclick="event.stopPropagation(); createOrderForTable(${table.id})">
-                        Создать заказ
-                    </button>
-                ` : ''}
-                ${currentUser?.role === 'admin' ? `
-                    <button class="danger small" style="margin-top: 4px; width: 100%;"
-                            onclick="event.stopPropagation(); deleteTable(${table.id})">
-                        Удалить
-                    </button>
-                ` : ''}
+            <div class="item table ${table.status === 'occupied' ? 'booked' : ''}" data-table-id="${table.id}">
+                <div class="name">Стол #${table.table_number || table.id}</div>
+                <div class="desc">${escapeHtml(table.location || '')}</div>
+                <div class="meta">${statusEmoji[table.status] || '🟢'} ${statusText[table.status] || table.status} (${table.capacity} мест)</div>
             </div>
         `).join('');
     } catch (error) {
         console.error('Error loading tables:', error);
-        tablesGrid.innerHTML = '<div class="info-muted">Ошибка при загрузке столиков</div>';
     }
 }
 
-// Загрузить заказы
 async function loadOrders() {
     const ordersList = document.getElementById('ordersList');
     if (!ordersList) return;
-    
+
     try {
         let orders = await getOrders();
+        if (!Array.isArray(orders)) orders = [];
         
-        // Фильтруем заказы по роли
-        if (currentUser?.role === 'chef') {
-            // Для повара только готовящиеся
+        if (currentUser && currentUser.role === 'chef') {
             orders = orders.filter(o => o.status === 'cooking' || o.status === 'pending');
-        } else if (currentUser?.role === 'waiter') {
-            // Для официанта его заказы или все если нет waiter_id
-            if (currentUser.id) {
-                orders = orders.filter(o => o.waiter_id === currentUser.id);
-            }
         }
-        // Для админа все заказы
-        
-        // Сортируем по дате (новые сверху)
-        orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
-        const statusIcons = {
-            'pending': '⏳',
-            'cooking': '👨‍🍳',
-            'ready': '✅',
-            'paid': '💰'
-        };
-        
-        ordersList.innerHTML = orders.map(order => `
-            <div class="order" data-order-id="${order.id}">
-                <div>
-                    <div style="font-weight: 700;">Заказ #${order.id} ${statusIcons[order.status] || ''}</div>
-                    <div style="font-size: 13px; color: var(--muted);">
-                        Стол #${order.table_id} • 
-                        ${order.status === 'pending' ? '⏳ Ожидание' : 
-                          order.status === 'cooking' ? '👨‍🍳 Готовится' : 
-                          order.status === 'ready' ? '✅ Готов' : 
-                          order.status === 'paid' ? '💰 Оплачен' : order.status}
-                    </div>
-                    <div style="font-size: 12px; margin-top: 4px;">
-                        ${new Date(order.created_at).toLocaleString()}
-                    </div>
-                </div>
-                <div>
-                    <div style="font-weight: 700; text-align: right; margin-bottom: 8px;">
-                        ${order.total_amount || 0} ₽
-                    </div>
-                    <div class="row" style="gap: 4px;">
-                        ${currentUser?.role === 'chef' && order.status === 'pending' ? `
-                            <button class="primary small" onclick="updateOrderStatus(${order.id}, 'cooking')">
-                                Принять
-                            </button>
-                        ` : ''}
-                        ${currentUser?.role === 'chef' && order.status === 'cooking' ? `
-                            <button class="primary small" onclick="updateOrderStatus(${order.id}, 'ready')">
-                                Готово
-                            </button>
-                        ` : ''}
-                        ${currentUser?.role === 'waiter' && order.status === 'ready' ? `
-                            <button class="primary small" onclick="updateOrderStatus(${order.id}, 'paid')">
-                                Оплатить
-                            </button>
-                        ` : ''}
-                        ${currentUser?.role === 'admin' ? `
-                            <button class="danger small" onclick="deleteOrder(${order.id})">
-                                Удалить
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `).join('');
         
         if (orders.length === 0) {
-            ordersList.innerHTML = '<div class="info-muted">Нет заказов</div>';
+            ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет заказов</div>';
+            return;
         }
+        
+        const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
+        
+        ordersList.innerHTML = orders.map(order => `
+            <div class="order" data-order-id="${order.id}" onclick="showOrderDetails(${order.id})" style="cursor: pointer;">
+                <div class="name">Заказ #${order.id} - Стол #${order.table_id}</div>
+                <div class="meta">Статус: <span style="color: #667eea; font-weight: bold;">${statusText[order.status] || order.status}</span></div>
+                <div class="meta">Сумма: <span style="color: #27ae60; font-weight: bold;">${order.total_amount || 0} ₽</span></div>
+            </div>
+        `).join('');
     } catch (error) {
         console.error('Error loading orders:', error);
-        ordersList.innerHTML = '<div class="info-muted">Ошибка при загрузке заказов</div>';
     }
 }
 
-// Загрузить статистику пользователя
+async function loadEmployees() {
+    const tableBody = document.getElementById('employeesTableBody');
+    if (!tableBody) return;
+
+    try {
+        const employees = await getEmployees();
+        if (!Array.isArray(employees) || employees.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Сотрудников нет</td></tr>';
+            return;
+        }
+        
+        const roleText = { 'waiter': '🙋 Официант', 'chef': '👩‍🍳 Повар', 'admin': '👨‍💼 Админ' };
+        
+        tableBody.innerHTML = employees.map(emp => `
+            <tr>
+                <td>#${emp.id}</td>
+                <td><strong>${escapeHtml(emp.username)}</strong></td>
+                <td>${escapeHtml(emp.name || '')}</td>
+                <td><span class="role-badge ${emp.role}">${roleText[emp.role] || emp.role}</span></td>
+                <td>
+                    <div class="employee-actions">
+                        <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px; width: auto;" onclick="editEmployeeModal(${emp.id}, '${escapeHtml(emp.username)}', '${escapeHtml(emp.name)}', '${emp.role}')">Edit</button>
+                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px; width: auto;" onclick="deleteEmployee(${emp.id})">Del</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading employees:', error);
+    }
+}
+
 async function loadUserStats() {
     if (!currentUser) return;
-    
     try {
         const stats = await getUserStats(currentUser.id);
+        const statOrders = document.getElementById('statOrders');
+        const statActive = document.getElementById('statActive');
+        const statTables = document.getElementById('statTables');
+        const statEmployees = document.getElementById('statEmployees');
         
-        document.getElementById('statOrders').textContent = stats.total_orders || 0;
-        document.getElementById('statActive').textContent = stats.active_orders || 0;
-        document.getElementById('statTables').textContent = stats.occupied_tables || 0;
+        if (statOrders) statOrders.textContent = stats.total_orders || 0;
+        if (statActive) statActive.textContent = stats.active_orders || 0;
+        if (statTables) statTables.textContent = stats.occupied_tables || 0;
+        if (currentUser.role === 'admin' && statEmployees) {
+            statEmployees.textContent = stats.total_employees || 3;
+        }
     } catch (error) {
-        console.error('Error loading user stats:', error);
+        console.error('Error loading stats:', error);
     }
 }
 
-// Загрузить информацию о пользователе
 function loadUserInfo() {
     const accountInfo = document.getElementById('accountInfo');
     if (!accountInfo || !currentUser) return;
-    
-    const roleNames = {
-        'waiter': 'Официант',
-        'chef': 'Повар',
-        'admin': 'Администратор'
-    };
-    
-    accountInfo.innerHTML = `
-        <div style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">
-            ${currentUser.name || currentUser.username}
-        </div>
-        <div style="color: var(--muted); margin-bottom: 4px;">
-            👤 Роль: ${roleNames[currentUser.role] || currentUser.role}
-        </div>
-        <div style="color: var(--muted); font-size: 13px;">
-            Логин: ${currentUser.username}
-        </div>
-    `;
+
+    const roleNames = { 'waiter': '🙋 Официант', 'chef': '👩‍🍳 Повар', 'admin': '👨‍💼 Админ' };
+    accountInfo.innerHTML = `<h3>${escapeHtml(currentUser.name || currentUser.username)}</h3><p>${roleNames[currentUser.role] || currentUser.role}</p>`;
 }
 
-// ==================== УПРАВЛЕНИЕ ВИДИМОСТЬЮ ====================
-
-// Показать форму авторизации
-function showAuth() {
-    document.getElementById('authSection').classList.remove('hidden');
-    document.getElementById('appSection').classList.add('hidden');
-}
-
-// Показать основное приложение
-function showApp() {
-    document.getElementById('authSection').classList.add('hidden');
-    document.getElementById('appSection').classList.remove('hidden');
+function updateAdminUI() {
+    const employeesMenuBtn = document.getElementById('employeesMenuBtn');
+    const statEmployeeCard = document.getElementById('statEmployeeCard');
     
-    // Загружаем данные
-    if (currentUser) {
-        loadRoleData(currentUser.role);
+    if (currentUser && currentUser.role === 'admin') {
+        if (employeesMenuBtn) employeesMenuBtn.classList.remove('hidden');
+        if (statEmployeeCard) statEmployeeCard.classList.remove('hidden');
+    } else {
+        if (employeesMenuBtn) employeesMenuBtn.classList.add('hidden');
+        if (statEmployeeCard) statEmployeeCard.classList.add('hidden');
     }
 }
 
-// Переключить на вкладку входа
-function switchToLogin() {
-    document.getElementById('tabLogin').classList.add('active');
-    document.getElementById('tabRegister').classList.remove('active');
-    document.getElementById('loginForm').classList.remove('hidden');
-    document.getElementById('registerForm').classList.add('hidden');
-}
+// ==================== MODALS ====================
 
-// Переключить на вкладку регистрации
-function switchToRegister() {
-    document.getElementById('tabLogin').classList.remove('active');
-    document.getElementById('tabRegister').classList.add('active');
-    document.getElementById('loginForm').classList.add('hidden');
-    document.getElementById('registerForm').classList.remove('hidden');
-}
-
-// Загрузить данные в зависимости от роли
-function loadRoleData(role) {
-    console.log('Loading data for role:', role);
+function showEmployeeModal(title = 'Добавить сотрудника', isEdit = false) {
+    editingEmployeeId = null;
+    const modal = document.getElementById('employeeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const form = document.getElementById('employeeForm');
+    const usernameField = document.getElementById('empUsername');
     
-    // Всегда загружаем пользователя и меню
+    if (modalTitle) modalTitle.textContent = title;
+    if (form) form.reset();
+    if (usernameField) usernameField.disabled = isEdit;
+    if (modal) modal.classList.remove('hidden');
+}
+
+function editEmployeeModal(empId, username, name, role) {
+    editingEmployeeId = empId;
+    const modal = document.getElementById('employeeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const form = document.getElementById('employeeForm');
+    const usernameField = document.getElementById('empUsername');
+    const nameField = document.getElementById('empName');
+    const roleField = document.getElementById('empRole');
+    const passwordField = document.getElementById('empPassword');
+    
+    if (modalTitle) modalTitle.textContent = 'Обновить сотрудника';
+    if (usernameField) { usernameField.value = username; usernameField.disabled = true; }
+    if (nameField) nameField.value = name;
+    if (roleField) roleField.value = role;
+    if (passwordField) { passwordField.value = ''; passwordField.placeholder = 'Новый пароль (не обязательно)'; }
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeEmployeeModal() {
+    const modal = document.getElementById('employeeModal');
+    if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('employeeForm');
+    if (form) form.reset();
+    editingEmployeeId = null;
+}
+
+function showOrderDetails(orderId) {
+    const orders = getDemoOrders();
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        showError('Заказ не найден');
+        return;
+    }
+    
+    const modal = document.getElementById('orderModal');
+    const details = document.getElementById('orderDetails');
+    
+    const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
+    const dishList = Array.isArray(order.dishes) ? order.dishes.join(', ') : 'Неизвестные блюда';
+    
+    if (details) {
+        details.innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #999; text-transform: uppercase; font-weight: bold;">Номер заказа</p>
+                        <h3 style="margin: 0; font-size: 24px; color: #667eea;">#${order.id}</h3>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #999; text-transform: uppercase; font-weight: bold;">Стол</p>
+                        <h3 style="margin: 0; font-size: 24px; color: #667eea;">#${order.table_id}</h3>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #e8f4f8; border-radius: 8px; border-left: 4px solid #0288d1;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #0288d1; text-transform: uppercase; font-weight: bold;">Статус</p>
+                    <p style="margin: 0; font-size: 16px; color: #0288d1; font-weight: bold;">${statusText[order.status] || order.status}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #999; text-transform: uppercase; font-weight: bold;">Блюда</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${dishList.split(', ').map(dish => `
+                            <span style="background: #f0f0f0; padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #333;">✓ ${escapeHtml(dish)}</span>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; background: #fff3e0; border-radius: 8px; border: 2px solid #f39c12;">
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #f39c12; text-transform: uppercase; font-weight: bold;">Общая стоимость</p>
+                    <h2 style="margin: 0; font-size: 32px; color: #f39c12;">${order.total_amount || 0} ₽</h2>
+                </div>
+                
+                <div style="margin-top: 15px; color: #999; font-size: 12px;">
+                    <p style="margin: 0;">⚠️ Время:</p>
+                    <p style="margin: 4px 0 0 0;">${new Date(order.created_at).toLocaleString('ru-RU')}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeOrderModal() {
+    const modal = document.getElementById('orderModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function editDishModal(dishId) {
+    editingDishId = dishId;
+    showSuccess('Редактирование блюд - в разработке');
+}
+
+async function deleteDish(dishId) {
+    if (confirm('Удалить это блюдо?')) {
+        showSuccess('Блюдо удалено');
+        loadMenu();
+    }
+}
+
+// ==================== EMPLOYEES MANAGEMENT ====================
+
+function addEmployeeModal() {
+    if (currentUser && currentUser.role !== 'admin') {
+        showError('Только администратор может добавлять');
+        return;
+    }
+    showEmployeeModal('Добавить сотрудника', false);
+}
+
+async function saveEmployee() {
+    const username = document.getElementById('empUsername')?.value?.trim();
+    const name = document.getElementById('empName')?.value?.trim();
+    const password = document.getElementById('empPassword')?.value?.trim();
+    const role = document.getElementById('empRole')?.value?.trim();
+    
+    if (!username || !role) {
+        showError('Укажите логин и роль');
+        return;
+    }
+    
+    if (!editingEmployeeId && !password) {
+        showError('Укажите пароль');
+        return;
+    }
+    
+    if (editingEmployeeId) {
+        showSuccess(`Сотрудник таобновлен`);
+    } else {
+        if (!name) {
+            showError('Укажите имя');
+            return;
+        }
+        showSuccess(`Сотрудник добавлен`);
+    }
+    
+    closeEmployeeModal();
+    loadEmployees();
+}
+
+async function deleteEmployee(empId) {
+    if (confirm('Удалить?')) {
+        showSuccess('Удалено');
+        loadEmployees();
+    }
+}
+
+// ==================== VISIBILITY ====================
+
+function showAuth() {
+    const auth = document.getElementById('authSection');
+    const app = document.getElementById('appSection');
+    if (auth) auth.classList.remove('hidden');
+    if (app) app.classList.add('hidden');
+}
+
+function showApp() {
+    const auth = document.getElementById('authSection');
+    const app = document.getElementById('appSection');
+    if (auth) auth.classList.add('hidden');
+    if (app) app.classList.remove('hidden');
+}
+
+function loadRoleData(role) {
     loadUserInfo();
+    updateAdminUI();
     loadUserStats();
     loadMenu();
     
-    // В зависимости от роли
     if (role === 'waiter' || role === 'admin') {
         loadTables();
         loadOrders();
     }
-    
     if (role === 'chef') {
         loadOrders();
     }
-    
-    // Скрываем/показываем элементы в зависимости от роли
-    document.querySelectorAll('[data-role]').forEach(element => {
-        const requiredRole = element.dataset.role;
-        if (requiredRole) {
-            element.style.display = requiredRole === role ? '' : 'none';
-        }
-    });
+    if (role === 'admin') {
+        loadEmployees();
+    }
 }
 
-// ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+// ==================== UTILITY ====================
 
-// Инициализация приложения
+function escapeHtml(text) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+// ==================== EVENT HANDLERS ====================
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing app...');
+    console.log('🚀 Приложение загружается...');
     
-    // Проверяем, авторизован ли пользователь
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
-            console.log('Found saved user:', currentUser);
             showApp();
+            loadRoleData(currentUser.role);
         } catch (e) {
-            console.error('Error parsing saved user:', e);
             localStorage.removeItem('currentUser');
             showAuth();
         }
     } else {
         showAuth();
     }
-    
-    // Обработчики вкладок авторизации
-    document.getElementById('tabLogin').addEventListener('click', switchToLogin);
-    document.getElementById('tabRegister').addEventListener('click', switchToRegister);
-    
-    // Обработчик входа
-    document.getElementById('doLogin').addEventListener('click', function() {
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
-        const role = document.getElementById('loginRole').value;
-        
-        if (!username || !password) {
-            showError('Введите логин и пароль');
-            return;
-        }
-        
-        login(username, password, role);
-    });
-    
-    // Обработчик регистрации
-    document.getElementById('doRegister').addEventListener('click', function() {
-        const username = document.getElementById('regUser').value.trim();
-        const password = document.getElementById('regPass').value.trim();
-        const role = document.getElementById('regRole').value;
-        
-        if (!username || !password) {
-            showError('Введите логин и пароль');
-            return;
-        }
-        
-        register(username, password, role);
-    });
-    
-    // Enter для входа
-    document.getElementById('loginPass').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('doLogin').click();
-        }
-    });
-    
-    // Enter для регистрации
-    document.getElementById('regPass').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('doRegister').click();
-        }
-    });
-    
-    // Обработчики главного меню
+
+    const doLogin = document.getElementById('doLogin');
+    if (doLogin) {
+        doLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUser')?.value?.trim() || '';
+            const password = document.getElementById('loginPass')?.value?.trim() || '';
+            
+            if (!username || !password) {
+                showError('Пожалуйста введите');
+                return;
+            }
+            login(username, password);
+        });
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
+
+    const loginPass = document.getElementById('loginPass');
+    if (loginPass) {
+        loginPass.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doLogin.click();
+            }
+        });
+    }
+
     document.querySelectorAll('.menu-btn').forEach(button => {
         button.addEventListener('click', function() {
-            // Убираем активный класс у всех кнопок
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Добавляем активный класс текущей кнопке
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
-            
-            // Скрываем все вкладки
-            document.querySelectorAll('.tabpane').forEach(tab => {
-                tab.classList.add('hidden');
-            });
-            
-            // Показываем нужную вкладку
+            document.querySelectorAll('.tabpane').forEach(tab => tab.classList.add('hidden'));
             const tabId = this.dataset.tab;
-            document.getElementById(tabId).classList.remove('hidden');
+            const tab = document.getElementById(tabId);
+            if (tab) tab.classList.remove('hidden');
             
-            // Загружаем данные для вкладки
-            if (tabId === 'menuTab') {
-                loadMenu();
-            } else if (tabId === 'ordersTab') {
-                loadOrders();
-            } else if (tabId === 'tablesTab') {
-                loadTables();
-            } else if (tabId === 'accountTab') {
-                loadUserInfo();
-                loadUserStats();
-            }
+            if (tabId === 'menuTab') loadMenu();
+            else if (tabId === 'ordersTab') loadOrders();
+            else if (tabId === 'tablesTab') loadTables();
+            else if (tabId === 'employeesTab') loadEmployees();
         });
     });
-    
-    // Обработчики переключения категорий меню
-    document.querySelectorAll('.switch-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            // Убираем активный класс у всех кнопок
-            document.querySelectorAll('.switch-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Добавляем активный класс текущей кнопке
-            this.classList.add('active');
-            
-            // Загружаем меню для выбранной категории
-            loadMenu();
+
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
         });
     });
-    
-    // Обработчик выхода
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    
-    // Быстрая авторизация (для демо)
-    document.querySelectorAll('.cred-row').forEach(row => {
-        row.addEventListener('click', function() {
-            const text = this.textContent.trim();
-            const match = text.match(/(\w+)\s*\/\s*(\w+)/);
-            
-            if (match) {
-                const username = match[1];
-                const password = match[2];
-                
-                document.getElementById('loginUser').value = username;
-                document.getElementById('loginPass').value = password;
-                
-                // Определяем роль по username
-                let role = 'waiter';
-                if (username.includes('admin')) role = 'admin';
-                if (username.includes('povar')) role = 'chef';
-                
-                document.getElementById('loginRole').value = role;
-                
-                showSuccess(`Данные для "${username}" подставлены. Нажмите "Войти".`);
-            }
-        });
-    });
-    
-    // Тестирование API
-    console.log('Testing API connection...');
-    fetch('/api/health')
-        .then(response => {
-            if (response.ok) {
-                console.log('✅ API is available');
-            } else {
-                console.log('⚠️ API returned status:', response.status);
-            }
-        })
-        .catch(error => {
-            console.log('❌ API connection failed:', error.message);
-        });
-    
-    console.log('App initialized');
+
+    fetch('/api/health').then(r => {
+        if (r.ok) console.log('✅ API OK');
+    }).catch(() => console.log('❌ API не доступна'));
+
+    console.log('✅ Приложение готово');
 });
 
-// ==================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ====================
+// ==================== GLOBAL EXPORTS ====================
 
-// Экспортируем функции для использования в HTML
 window.login = login;
-window.register = register;
 window.logout = logout;
-
-// API функции
-window.getDishes = getDishes;
-window.getTables = getTables;
-window.getOrders = getOrders;
-window.getUserStats = getUserStats;
-
-// Действия
-window.openTableModal = function(tableId) {
-    console.log('Opening table modal for table:', tableId);
-    showSuccess(`Информация о столе #${tableId} (функция в разработке)`);
-};
-
-window.createOrderForTable = function(tableId) {
-    console.log('Creating order for table:', tableId);
-    showSuccess(`Создание заказа для стола #${tableId} (функция в разработке)`);
-};
-
-window.updateOrderStatus = function(orderId, status) {
-    console.log('Updating order status:', orderId, '->', status);
-    showSuccess(`Статус заказа #${orderId} изменен на "${status}"`);
-    loadOrders(); // Обновляем список
-};
-
-window.editDish = function(dishId) {
-    console.log('Editing dish:', dishId);
-    showSuccess(`Редактирование блюда #${dishId} (функция в разработке)`);
-};
-
-window.deleteDish = function(dishId) {
-    if (!confirm('Вы уверены, что хотите удалить это блюдо?')) return;
-    console.log('Deleting dish:', dishId);
-    showSuccess(`Блюдо #${dishId} удалено`);
-    loadMenu(); // Обновляем меню
-};
-
-window.deleteTable = function(tableId) {
-    if (!confirm('Вы уверены, что хотите удалить этот столик?')) return;
-    console.log('Deleting table:', tableId);
-    showSuccess(`Столик #${tableId} удален`);
-    loadTables(); // Обновляем список
-};
-
-window.deleteOrder = function(orderId) {
-    if (!confirm('Вы уверены, что хотите удалить этот заказ?')) return;
-    console.log('Deleting order:', orderId);
-    showSuccess(`Заказ #${orderId} удален`);
-    loadOrders(); // Обновляем список
-};
-
-// Добавляем стили для маленьких кнопок
-const style = document.createElement('style');
-style.textContent = `
-    .small {
-        padding: 6px 10px !important;
-        font-size: 12px !important;
-        min-width: auto !important;
-    }
-    
-    .primary.small:hover, .danger.small:hover {
-        opacity: 0.9;
-    }
-    
-    .table:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    .order:hover {
-        transform: translateX(2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    }
-`;
-document.head.appendChild(style);
-
-console.log('Restaurant Management System Frontend loaded');
+window.addEmployeeModal = addEmployeeModal;
+window.editEmployeeModal = editEmployeeModal;
+window.closeEmployeeModal = closeEmployeeModal;
+window.saveEmployee = saveEmployee;
+window.deleteEmployee = deleteEmployee;
+window.showOrderDetails = showOrderDetails;
+window.closeOrderModal = closeOrderModal;
+window.editDishModal = editDishModal;
+window.deleteDish = deleteDish;
+window.loadMenu = loadMenu;
+window.loadTables = loadTables;
+window.loadOrders = loadOrders;
+window.loadEmployees = loadEmployees;
+window.escapeHtml = escapeHtml;

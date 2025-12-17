@@ -905,3 +905,108 @@ document.addEventListener('DOMContentLoaded', function() {
 // Скрипт загружается в конце <body>, DOM уже готов!
 (function initApp() {
     console.log('🚀 App init started...');
+    
+    // Check saved auth
+    const savedUser = localStorage.getItem('currentUser');
+    const savedToken = localStorage.getItem('authToken');
+    
+    if (savedUser && savedToken) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            authToken = savedToken;
+            showApp();
+            loadRoleData(currentUser.role);
+        } catch (e) {
+            console.error('Error loading saved session:', e);
+            showAuth();
+        }
+    } else {
+        showAuth();
+    }
+    
+    // ==================== LOGIN BUTTON ====================
+    // CRITICAL FIX: Add event listener for login button
+    const loginBtn = document.getElementById('doLogin');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('✅ Login button clicked!');
+            
+            const username = document.getElementById('loginUser')?.value?.trim();
+            const password = document.getElementById('loginPass')?.value?.trim();
+            
+            if (!username || !password) {
+                showError('Введите логин и пароль');
+                return;
+            }
+            
+            login(username, password);
+        });
+        console.log('✅ Login button event listener attached');
+    } else {
+        console.error('❌ Login button #doLogin not found!');
+    }
+    
+    // ==================== LOGOUT BUTTON ====================
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
+    
+    // ==================== MENU NAVIGATION ====================
+    const menuButtons = document.querySelectorAll('.menu-btn');
+    menuButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Hide all tabs
+            document.querySelectorAll('.tabpane').forEach(pane => pane.classList.add('hidden'));
+            
+            // Show target tab
+            const tab = document.getElementById(targetTab);
+            if (tab) tab.classList.remove('hidden');
+            
+            // Update active menu
+            menuButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    console.log('✅ App fully initialized!');
+})();
+
+// ==================== GLOBAL EXPORTS ====================
+// Export all functions to window object for onclick handlers
+window.login = login;
+window.logout = logout;
+window.addEmployeeModal = addEmployeeModal;
+window.showEditEmployeeModal = showEditEmployeeModal;
+window.saveEmployee = saveEmployee;
+window.deleteEmployee = deleteEmployee;
+window.showOrderDetails = showOrderDetails;
+window.showEditOrderModal = showEditOrderModal;
+window.updateOrder = updateOrder;
+window.completeOrder = completeOrder;
+window.showAddDishModal = showAddDishModal;
+window.showEditDishModal = showEditDishModal;
+window.saveDish = saveDish;
+window.deleteDish = deleteDish;
+window.loadMenu = loadMenu;
+window.loadTables = loadTables;
+window.loadOrders = loadOrders;
+window.loadEmployees = loadEmployees;
+window.showCreateOrderForTable = showCreateOrderForTable;
+window.createOrder = createOrder;
+window.closeOrderModal = closeOrderModal;
+window.closeEmployeeModal = closeEmployeeModal;
+window.closeEditOrderModal = closeEditOrderModal;
+window.closeCreateOrderModal = closeCreateOrderModal;
+window.closeDishModal = closeDishModal;
+window.closeEmployeeForm = closeEmployeeForm;
+
+console.log('✅ App.js fully loaded and initialized!');
+
+});

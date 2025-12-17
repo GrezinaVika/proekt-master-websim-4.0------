@@ -1008,4 +1008,59 @@ window.closeEmployeeForm = closeEmployeeForm;
 
 console.log('✅ App.js fully loaded and initialized!');
 
+// ====================  EVENT LISTENERS ====================
+// CRITICAL: Login button handler - MUST WORK!
+console.log('🔵 Setting up login button handler...');
+
+// Wait for DOM to be fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLoginButton);
+} else {
+    // DOM already loaded
+    initLoginButton();
+}
+
+function initLoginButton() {
+    console.log('🔵 initLoginButton() called');
+    
+    const loginBtn = document.getElementById('doLogin');
+    console.log('🔵 Login button element:', loginBtn);
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('✅ LOGIN BUTTON CLICKED!');
+            
+            const username = document.getElementById('loginUser')?.value?.trim();
+            const password = document.getElementById('loginPass')?.value?.trim();
+            
+            console.log('Username:', username);
+            console.log('Password:', password ? '***' : 'empty');
+            
+            if (!username || !password) {
+                alert('❌ Введите логин и пароль!');
+                return;
+            }
+            
+            console.log('🚀 Calling login function...');
+            login(username, password);
+        });
+        console.log('✅ Login button event listener attached successfully!');
+    } else {
+        console.error('❌ ERROR: Login button #doLogin NOT FOUND in DOM!');
+    }
+    
+    // Also setup logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+        console.log('✅ Logout button handler attached');
+    }
+}
+
+console.log('✅ app.js fully loaded and ready!');
+
 });

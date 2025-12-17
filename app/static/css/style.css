@@ -109,6 +109,8 @@ body, html {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+       position: relative;
+       z-index: 10;
     margin-top: 8px;
     transition: opacity 0.2s;
 }
@@ -404,6 +406,8 @@ body, html {
     border: none;
     border-radius: 8px;
     cursor: pointer;
+       position: relative;
+       z-index: 10;
     font-weight: 500;
     transition: all 0.2s;
 }

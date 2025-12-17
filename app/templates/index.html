@@ -1,113 +1,121 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>RestaurantSys</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platter Flow - Система управления рестораном</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div id="app">
-        <header class="topbar">
-            <div class="brand">
-                <img src="https://284baef4-3d14-4ca5-8247-4811f0d6b14b.selstorage.ru/c3741c32-5696-4497-86af-c7dc006ad6a4_logo_flower_(1).png" 
-                     alt="Platter Flow Logo" 
-                     class="logo">
-                <div class="title">Platter Flow</div>
+    <!-- СТРАНИЦА ВХОДА -->
+    <div id="loginPage" class="login-page">
+        <div class="login-card">
+            <div class="login-header">
+                <svg class="login-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="64" rx="12" fill="url(#gradient)"/>
+                    <path d="M20 25h24M20 32h24M20 39h16" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64">
+                            <stop offset="0%" stop-color="#667eea"/>
+                            <stop offset="100%" stop-color="#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1 class="login-title">Platter Flow</h1>
             </div>
-            <div class="icons"></div>
-        </header>
-
-        <main class="card">
-            <section id="authSection" class="pane center-auth">
-                <div class="tabs-auth">
-                    <button id="tabLogin" class="tab active">Вход</button>
-                    <button id="tabRegister" class="tab">Регистрация</button>
+            <form class="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="username">Логин</label>
+                    <input type="text" id="username" required>
                 </div>
+                <div class="input-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">Войти</button>
+            </form>
+        </div>
+    </div>
 
-                <div id="loginForm" class="form">
-                    <input id="loginUser" placeholder="Логин" />
-                    <input id="loginPass" placeholder="Пароль" type="password" />
-                    <div class="row">
-                        <select id="loginRole">
-                            <option value="waiter">Официант</option>
-                            <option value="chef">Повар</option>
-                            <option value="admin">Администратор</option>
-                        </select>
-                        <button id="doLogin" class="primary">Войти</button>
+    <!-- ГЛАВНАЯ СТРАНИЦА -->
+    <div id="appContainer" class="app-container hidden">
+        <!-- БОКОВОЕ МЕНЮ -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg class="sidebar-logo-img" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="url(#gradient2)"/>
+                        <path d="M12 15h16M12 20h16M12 25h10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="gradient2" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="sidebar-logo-text">Platter Flow</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="showSection('menu'); return false;">
+                    <span class="nav-icon">🍽️</span>
+                    <span>Меню</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('orders'); return false;">
+                    <span class="nav-icon">📋</span>
+                    <span>Заказы</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showSection('tables'); return false;">
+                    <span class="nav-icon">🪑</span>
+                    <span>Столы</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- ОСНОВНОЙ КОНТЕНТ -->
+        <main class="main-content">
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+            <div class="topbar">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <span class="user-name" id="currentUser"></span>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Выход</button>
+            </div>
+
+            <!-- КОНТЕНТ -->
+            <div class="content">
+                <!-- МЕНЮ -->
+                <div id="menuSection" class="section">
+                    <div class="content-header">
+                        <h2 class="content-title">Меню ресторана</h2>
                     </div>
-
-                    <div class="cred-box">
-                        <div class="cred-title">Данные для входа</div>
-                        <div class="cred-row"><strong>Официант:</strong> ofikNum1 / 123321</div>
-                        <div class="cred-row"><strong>Администратор:</strong> adminNum1 / 123321</div>
-                        <div class="cred-row"><strong>Повар:</strong> povarNum1 / 123321</div>
+                    <div class="menu-grid" id="menuGrid">
+                        <!-- Пункты меню загружаются динамически -->
                     </div>
                 </div>
 
-                <div id="registerForm" class="form hidden">
-                    <input id="regUser" placeholder="Логин" />
-                    <input id="regPass" placeholder="Пароль" type="password" />
-                    <div class="row">
-                        <select id="regRole">
-                            <option value="waiter">Официант</option>
-                            <option value="chef">Повар</option>
-                            <option value="admin">Администратор</option>
-                        </select>
-                        <button id="doRegister" class="primary">Зарегистрироваться</button>
+                <!-- ЗАКАЗЫ -->
+                <div id="ordersSection" class="section hidden">
+                    <div class="content-header">
+                        <h2 class="content-title">Заказы</h2>
+                    </div>
+                    <div class="orders-list" id="ordersList">
+                        <!-- Заказы загружаются динамически -->
                     </div>
                 </div>
-            </section>
 
-            <section id="appSection" class="pane hidden">
-                <nav class="menu">
-                    <button class="menu-btn active" data-tab="menuTab">Меню</button>
-                    <button class="menu-btn" data-tab="ordersTab">Заказы</button>
-                    <button class="menu-btn" data-tab="tablesTab">Столы</button>
-                    <button class="menu-btn" data-tab="accountTab">Личный кабинет</button>
-                </nav>
-
-                <div id="menuTab" class="tabpane">
-                    <div class="tabs-switch">
-                        <button class="switch-btn active" data-section="main">Основное</button>
-                        <button class="switch-btn" data-section="hot">Горячее</button>
-                        <button class="switch-btn" data-section="drinks">Напитки</button>
-                        <button class="switch-btn" data-section="dessert">Десерт</button>
+                <!-- СТОЛЫ -->
+                <div id="tablesSection" class="section hidden">
+                    <div class="content-header">
+                        <h2 class="content-title">Столы</h2>
                     </div>
-                    <div id="menuContent" class="menu-list"></div>
-                    <div class="info-muted">Добавление в заказ производится через раздел «Столы» — выберите стол и добавьте позиции.</div>
-                </div>
-
-                <div id="ordersTab" class="tabpane hidden">
-                    <div class="orders-list" id="ordersList"></div>
-                </div>
-
-                <div id="tablesTab" class="tabpane hidden">
-                    <div class="tables-grid" id="tablesGrid"></div>
-                </div>
-
-                <div id="accountTab" class="tabpane hidden">
-                    <div id="accountInfo" class="account-card"></div>
-                    <div class="account-stats">
-                        <div class="stat">
-                            <div class="stat-num" id="statOrders">0</div>
-                            <div class="stat-label">Всего заказов</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-num" id="statActive">0</div>
-                            <div class="stat-label">Активных</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-num" id="statTables">0</div>
-                            <div class="stat-label">Занятых столов</div>
-                        </div>
+                    <div class="tables-grid" id="tablesGrid">
+                        <!-- Столы загружаются динамически -->
                     </div>
-                    <button id="logoutBtn" class="danger">Выйти</button>
                 </div>
-            </section>
+            </div>
         </main>
-
-        <footer class="bottombar hidden" aria-hidden="true"></footer>
     </div>
 
     <script src="/static/js/app.js"></script>

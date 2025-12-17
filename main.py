@@ -22,7 +22,8 @@ app = FastAPI(
     description="Full-stack система управления рестораном",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
+        redirect_slashes=False
 )
 
 # Настройка CORS

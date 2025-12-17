@@ -493,8 +493,14 @@ async def get_orders():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/orders/")
-async def create_order(table_id: int, waiter_id: int, dishes: list, total_amount: float):
+async def create_order(data: dict = Body(...)):
     """Создать новый заказ"""
+        # Extract data from JSON body
+    table_id = data.get('table_id')
+    waiter_id = data.get('waiter_id', 1)  # Default to waiter 1 if not provided
+    dishes = data.get('dishes', [])
+    total_amount = data.get('total_amount', 0)
+    
     try:
         conn = get_db()
         cursor = conn.cursor()

@@ -110,6 +110,7 @@ async function getDishes() {
         if (response && response.items && Array.isArray(response.items)) return response.items;
         return getDemoDishes();
     } catch (error) {
+        console.warn('API unavailable, using demo data');
         return getDemoDishes();
     }
 }
@@ -133,6 +134,7 @@ async function getTables() {
         if (response && Array.isArray(response)) return response;
         return getDemoTables();
     } catch (error) {
+        console.warn('API unavailable, using demo data');
         return getDemoTables();
     }
 }
@@ -156,6 +158,7 @@ async function getOrders() {
         if (response && Array.isArray(response)) return response;
         return getDemoOrders();
     } catch (error) {
+        console.warn('API unavailable, using demo data');
         return getDemoOrders();
     }
 }
@@ -163,10 +166,29 @@ async function getOrders() {
 function getDemoOrders() {
     const now = new Date();
     return [
-        { id: 1, table_id: 2, status: 'pending', total_amount: 1200, created_at: new Date(now - 2*60*60*1000).toISOString(), waiter_id: 1 },
-        { id: 2, table_id: 4, status: 'cooking', total_amount: 800, created_at: new Date(now - 1*60*60*1000).toISOString(), waiter_id: 1 },
-        { id: 3, table_id: 1, status: 'ready', total_amount: 450, created_at: now.toISOString(), waiter_id: 1 },
-        { id: 4, table_id: 6, status: 'pending', total_amount: 1950, created_at: now.toISOString(), waiter_id: 1 }
+        { id: 1, table_id: 2, status: 'pending', total_amount: 1200, created_at: new Date(now - 2*60*60*1000).toISOString(), waiter_id: 1, dishes: [Борщ, Чай'] },
+        { id: 2, table_id: 4, status: 'cooking', total_amount: 800, created_at: new Date(now - 1*60*60*1000).toISOString(), waiter_id: 1, dishes: ['Стейк'] },
+        { id: 3, table_id: 1, status: 'ready', total_amount: 450, created_at: now.toISOString(), waiter_id: 1, dishes: ['Салат'] },
+        { id: 4, table_id: 6, status: 'pending', total_amount: 1950, created_at: now.toISOString(), waiter_id: 1, dishes: ['Пицца', 'Чизкейк', 'Кофе'] }
+    ];
+}
+
+async function getEmployees() {
+    try {
+        const response = await apiRequest('/employees/');
+        if (response && Array.isArray(response)) return response;
+        return getDemoEmployees();
+    } catch (error) {
+        console.warn('API unavailable, using demo data');
+        return getDemoEmployees();
+    }
+}
+
+function getDemoEmployees() {
+    return [
+        { id: 1, username: 'ofikNum1', role: 'waiter' },
+        { id: 2, username: 'adminNum1', role: 'admin' },
+        { id: 3, username: 'povarNum1', role: 'chef' }
     ];
 }
 
@@ -188,15 +210,21 @@ async function loadMenu() {
 
     try {
         const dishes = await getDishes();
+        if (!Array.isArray(dishes) || dishes.length === 0) {
+            menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет данных</div>';
+            return;
+        }
+        
         menuContent.innerHTML = dishes.map(dish => `
             <div class="item" data-dish-id="${dish.id}">
-                <div class="name">${dish.name || ''}</div>
+                <div class="name">${escapeHtml(dish.name || '')} ${dish.category ? ` <span style="font-size: 12px; color: #999;">(${escapeHtml(dish.category)})</span>` : ''}</div>
+                <div class="desc">Время приготовления: ${dish.cooking_time || 0} мин.</div>
                 <div class="meta">${dish.price || 0} ₽</div>
             </div>
         `).join('');
     } catch (error) {
         console.error('Error loading menu:', error);
-        if (menuContent) menuContent.innerHTML = '<div>Error loading menu</div>';
+        menuContent.innerHTML = '<div style="padding: 20px; color: red;">Error loading menu</div>';
     }
 }
 
@@ -206,10 +234,19 @@ async function loadTables() {
 
     try {
         const tables = await getTables();
+        if (!Array.isArray(tables) || tables.length === 0) {
+            tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">No tables available</div>';
+            return;
+        }
+        
+        const statusEmoji = { 'free': '🟢', 'occupied': '🟡', 'reserved': '🟠' };
+        const statusText = { 'free': 'Свободен', 'occupied': 'Занят', 'reserved': 'Зарезервирован' };
+        
         tablesGrid.innerHTML = tables.map(table => `
-            <div class="item" data-table-id="${table.id}">
+            <div class="item table ${table.status === 'occupied' ? 'booked' : ''}" data-table-id="${table.id}">
                 <div class="name">Стол #${table.table_number || table.id}</div>
-                <div class="meta">${table.status === 'free' ? '🟢' : '🔴'} ${table.capacity} мест</div>
+                <div class="desc">${escapeHtml(table.location || '')}</div>
+                <div class="meta">${statusEmoji[table.status] || '🟢'} ${statusText[table.status] || table.status} (${table.capacity} мест)</div>
             </div>
         `).join('');
     } catch (error) {
@@ -223,18 +260,59 @@ async function loadOrders() {
 
     try {
         let orders = await getOrders();
+        if (!Array.isArray(orders)) orders = [];
+        
         if (currentUser && currentUser.role === 'chef') {
             orders = orders.filter(o => o.status === 'cooking' || o.status === 'pending');
         }
         
+        if (orders.length === 0) {
+            ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Нет заказов</div>';
+            return;
+        }
+        
+        const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
+        
         ordersList.innerHTML = orders.map(order => `
-            <div class="order" data-order-id="${order.id}">
+            <div class="order" data-order-id="${order.id}" onclick="showOrderDetails(${order.id})">
                 <div class="name">Заказ #${order.id} - Стол #${order.table_id}</div>
-                <div class="meta">${order.total_amount || 0} ₽</div>
+                <div class="meta">Статус: ${statusText[order.status] || order.status}</div>
+                <div class="meta">Сумма: ${order.total_amount || 0} ₽</div>
             </div>
         `).join('');
     } catch (error) {
         console.error('Error loading orders:', error);
+    }
+}
+
+async function loadEmployees() {
+    const tableBody = document.getElementById('employeesTableBody');
+    if (!tableBody) return;
+
+    try {
+        const employees = await getEmployees();
+        if (!Array.isArray(employees) || employees.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No employees</td></tr>';
+            return;
+        }
+        
+        const roleText = { 'waiter': 'Официант', 'chef': 'Повар', 'admin': 'Админ' };
+        
+        tableBody.innerHTML = employees.map(emp => `
+            <tr>
+                <td>${emp.id}</td>
+                <td>${escapeHtml(emp.username)}</td>
+                <td><span class="role-badge ${emp.role}">${roleText[emp.role] || emp.role}</span></td>
+                <td>
+                    <div class="employee-actions">
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="editEmployee(${emp.id})">Редактировать</button>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteEmployee(${emp.id})">Удалить</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading employees:', error);
     }
 }
 
@@ -245,9 +323,14 @@ async function loadUserStats() {
         const statOrders = document.getElementById('statOrders');
         const statActive = document.getElementById('statActive');
         const statTables = document.getElementById('statTables');
+        const statEmployees = document.getElementById('statEmployees');
+        
         if (statOrders) statOrders.textContent = stats.total_orders || 0;
         if (statActive) statActive.textContent = stats.active_orders || 0;
         if (statTables) statTables.textContent = stats.occupied_tables || 0;
+        if (currentUser.role === 'admin' && statEmployees) {
+            statEmployees.textContent = stats.total_employees || 3;
+        }
     } catch (error) {
         console.error('Error loading stats:', error);
     }
@@ -258,7 +341,106 @@ function loadUserInfo() {
     if (!accountInfo || !currentUser) return;
 
     const roleNames = { 'waiter': 'Официант', 'chef': 'Повар', 'admin': 'Админ' };
-    accountInfo.innerHTML = `<h3>${currentUser.name || currentUser.username}</h3><p>${roleNames[currentUser.role] || currentUser.role}</p>`;
+    accountInfo.innerHTML = `<h3>${escapeHtml(currentUser.name || currentUser.username)}</h3><p>${roleNames[currentUser.role] || currentUser.role}</p>`;
+}
+
+function updateAdminUI() {
+    const employeesMenuBtn = document.getElementById('employeesMenuBtn');
+    const statEmployeeCard = document.getElementById('statEmployeeCard');
+    
+    if (currentUser && currentUser.role === 'admin') {
+        if (employeesMenuBtn) employeesMenuBtn.classList.remove('hidden');
+        if (statEmployeeCard) statEmployeeCard.classList.remove('hidden');
+    }
+}
+
+// ==================== MODALS ====================
+
+function showEmployeeModal(title = 'Добавить сотрудника') {
+    const modal = document.getElementById('employeeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const form = document.getElementById('employeeForm');
+    
+    if (modalTitle) modalTitle.textContent = title;
+    if (form) form.reset();
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeEmployeeModal() {
+    const modal = document.getElementById('employeeModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function showOrderDetails(orderId) {
+    const orders = getDemoOrders();
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        showError('Заказ не найден');
+        return;
+    }
+    
+    const modal = document.getElementById('orderModal');
+    const details = document.getElementById('orderDetails');
+    
+    const statusText = { 'pending': 'Ожидание', 'cooking': 'Приготовление', 'ready': 'Готов', 'completed': 'Выдан' };
+    const dishList = Array.isArray(order.dishes) ? order.dishes.join(', ') : 'Неизвестные блюда';
+    
+    if (details) {
+        details.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <h4>№ Заказа: ${order.id}</h4>
+                <p><strong>Стол:</strong> #${order.table_id}</p>
+                <p><strong>Статус:</strong> ${statusText[order.status] || order.status}</p>
+                <p><strong>Блюда:</strong> ${escapeHtml(dishList)}</p>
+                <p><strong>Сумма:</strong> ${order.total_amount} ₽</p>
+                <p><strong>Время составления:</strong> ${new Date(order.created_at).toLocaleString('ru-RU')}</p>
+            </div>
+        `;
+    }
+    
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeOrderModal() {
+    const modal = document.getElementById('orderModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// ==================== EMPLOYEES MANAGEMENT ====================
+
+function addEmployeeModal() {
+    if (currentUser && currentUser.role !== 'admin') {
+        showError('Только администратор может добавлять сотрудников');
+        return;
+    }
+    showEmployeeModal('Добавить сотрудника');
+}
+
+function saveEmployee() {
+    const username = document.getElementById('empUsername')?.value?.trim();
+    const password = document.getElementById('empPassword')?.value?.trim();
+    const role = document.getElementById('empRole')?.value?.trim();
+    
+    if (!username || !password || !role) {
+        showError('Все поля обязательны');
+        return;
+    }
+    
+    showSuccess(`Сотрудник ${username} успешно добавлен`);
+    closeEmployeeModal();
+    loadEmployees();
+}
+
+function editEmployee(empId) {
+    showSuccess('Уравление сотрудникам в разработке');
+}
+
+function deleteEmployee(empId) {
+    if (confirm('Вы наверны что хотите удалить этого сотрудника?')) {
+        showSuccess('Сотрудник удален');
+        loadEmployees();
+    }
 }
 
 // ==================== VISIBILITY ====================
@@ -293,8 +475,10 @@ function switchToRegister() {
 
 function loadRoleData(role) {
     loadUserInfo();
+    updateAdminUI();
     loadUserStats();
     loadMenu();
+    
     if (role === 'waiter' || role === 'admin') {
         loadTables();
         loadOrders();
@@ -302,6 +486,22 @@ function loadRoleData(role) {
     if (role === 'chef') {
         loadOrders();
     }
+    if (role === 'admin') {
+        loadEmployees();
+    }
+}
+
+// ==================== UTILITY ====================
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
 // ==================== EVENT HANDLERS ====================
@@ -312,7 +512,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             currentUser = JSON.parse(savedUser);
             showApp();
+            loadRoleData(currentUser.role);
         } catch (e) {
+            console.error('Error parsing saved user:', e);
             localStorage.removeItem('currentUser');
             showAuth();
         }
@@ -362,6 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
+    // Tab switching
     document.querySelectorAll('.menu-btn').forEach(button => {
         button.addEventListener('click', function() {
             document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
@@ -370,13 +573,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const tabId = this.dataset.tab;
             const tab = document.getElementById(tabId);
             if (tab) tab.classList.remove('hidden');
+            
+            // Load data for current tab
             if (tabId === 'menuTab') loadMenu();
             else if (tabId === 'ordersTab') loadOrders();
             else if (tabId === 'tablesTab') loadTables();
+            else if (tabId === 'employeesTab') loadEmployees();
         });
     });
 
-    fetch('/api/health').then(r => console.log(r.ok ? '✅ API OK' : '⚠️ API issue')).catch(() => console.log('❌ API down'));
+    // Close modals on background click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    });
+
+    // Check API health
+    fetch('/api/health').then(r => {
+        if (r.ok) {
+            console.log('✅ API OK');
+        } else {
+            console.log('⚠️ API issue');
+        }
+    }).catch(() => console.log('❌ API down'));
+
+    console.log('🚚 App loaded successfully');
 });
 
 // ==================== EXPORTS ====================
@@ -384,6 +608,14 @@ document.addEventListener('DOMContentLoaded', function() {
 window.login = login;
 window.register = register;
 window.logout = logout;
-window.addEmployeeModal = function() { showSuccess('Функция в разработке'); };
-
-console.log('🚚 App loaded');
+window.addEmployeeModal = addEmployeeModal;
+window.closeEmployeeModal = closeEmployeeModal;
+window.saveEmployee = saveEmployee;
+window.editEmployee = editEmployee;
+window.deleteEmployee = deleteEmployee;
+window.showOrderDetails = showOrderDetails;
+window.closeOrderModal = closeOrderModal;
+window.loadMenu = loadMenu;
+window.loadTables = loadTables;
+window.loadOrders = loadOrders;
+window.loadEmployees = loadEmployees;

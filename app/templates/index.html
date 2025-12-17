@@ -3,121 +3,684 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platter Flow - Система управления рестораном</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Система управления Platter Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* AUTH */
+        #authSection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            gap: 40px;
+            padding: 20px;
+        }
+
+        .auth-container {
+            display: flex;
+            gap: 40px;
+            max-width: 900px;
+            align-items: flex-start;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .test-credentials {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 380px;
+            padding: 30px;
+        }
+
+        .test-credentials h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .test-user {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .test-user h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .test-user p {
+            margin: 4px 0;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #eee;
+            color: #333;
+            width: auto;
+        }
+
+        .btn-secondary:hover {
+            background: #ddd;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            width: auto;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* APP */
+        #appSection {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+
+        .app-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            color: #667eea;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #accountInfo {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        #accountInfo h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        #accountInfo p {
+            margin: 0;
+            color: #666;
+        }
+
+        #logoutBtn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #logoutBtn:hover {
+            background: #c0392b;
+        }
+
+        .app-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #eee;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-btn {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .menu-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+
+        .menu-btn.active {
+            background: #f0f0f0;
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .tabpane h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .item .name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .item .desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            min-height: 40px;
+        }
+
+        .item .meta {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .order {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .order:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transform: translateX(5px);
+        }
+
+        .order .name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .order .meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        /* EMPLOYEES TABLE */
+        .employees-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .employees-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .employees-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .employees-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+            color: #333;
+        }
+
+        .employees-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+
+        .employees-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .employee-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .role-badge.waiter {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-badge.chef {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .role-badge.admin {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-actions {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; }
+            .items-grid { grid-template-columns: 1fr; }
+            #authSection { flex-direction: column; gap: 20px; }
+            .auth-container { flex-direction: column; max-width: 100%; }
+        }
+    </style>
 </head>
 <body>
-    <!-- СТРАНИЦА ВХОДА -->
-    <div id="loginPage" class="login-page">
-        <div class="login-card">
-            <div class="login-header">
-                <svg class="login-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="64" height="64" rx="12" fill="url(#gradient)"/>
-                    <path d="M20 25h24M20 32h24M20 39h16" stroke="white" stroke-width="3" stroke-linecap="round"/>
-                    <defs>
-                        <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64">
-                            <stop offset="0%" stop-color="#667eea"/>
-                            <stop offset="100%" stop-color="#764ba2"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <h1 class="login-title">Platter Flow</h1>
+    <!-- AUTH -->
+    <div id="authSection">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>🝴 Platter Flow</h2>
+                <div style="background: #e8f4f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; color: #0288d1; font-size: 14px; line-height: 1.5;">
+                    <strong>⚠️ Важно:</strong> Роль привязана к вашему аккаунту. При входе под своим логином вы получите соответствующие пожинки.
+                </div>
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="loginUser" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPass" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="doLogin">✅ Вход</button>
+                </form>
             </div>
-            <form class="login-form" onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <label for="username">Логин</label>
-                    <input type="text" id="username" required>
+
+            <div class="test-credentials">
+                <h3>👻 Тестовые данные</h3>
+                <div class="test-user">
+                    <h4>🙋 Официант</h4>
+                    <p>Логин: <strong>ofikNum1</strong></p>
+                    <p>Пароль: <strong>123321</strong></p>
                 </div>
-                <div class="input-group">
-                    <label for="password">Пароль</label>
-                    <input type="password" id="password" required>
+                <div class="test-user">
+                    <h4>👨‍💼 Администратор</h4>
+                    <p>Логин: <strong>adminNum1</strong></p>
+                    <p>Пароль: <strong>123321</strong></p>
                 </div>
-                <button type="submit" class="login-btn">Войти</button>
-            </form>
+                <div class="test-user">
+                    <h4>👩‍🍳 Повар</h4>
+                    <p>Логин: <strong>povarNum1</strong></p>
+                    <p>Пароль: <strong>123321</strong></p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ГЛАВНАЯ СТРАНИЦА -->
-    <div id="appContainer" class="app-container hidden">
-        <!-- БОКОВОЕ МЕНЮ -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <svg class="sidebar-logo-img" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="40" height="40" rx="8" fill="url(#gradient2)"/>
-                        <path d="M12 15h16M12 20h16M12 25h10" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                        <defs>
-                            <linearGradient id="gradient2" x1="0" y1="0" x2="40" y2="40">
-                                <stop offset="0%" stop-color="#667eea"/>
-                                <stop offset="100%" stop-color="#764ba2"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <span class="sidebar-logo-text">Platter Flow</span>
+    <!-- APP -->
+    <div id="appSection" class="hidden">
+        <div class="app-header">
+            <h1>🝴 Platter Flow</h1>
+            <div class="header-right">
+                <div id="accountInfo">
+                    <h3>User</h3>
+                    <p>Role</p>
                 </div>
+                <button id="logoutBtn">🛋 Выход</button>
             </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" onclick="showSection('menu'); return false;">
-                    <span class="nav-icon">🍽️</span>
-                    <span>Меню</span>
-                </a>
-                <a href="#" class="nav-item" onclick="showSection('orders'); return false;">
-                    <span class="nav-icon">📋</span>
-                    <span>Заказы</span>
-                </a>
-                <a href="#" class="nav-item" onclick="showSection('tables'); return false;">
-                    <span class="nav-icon">🪑</span>
-                    <span>Столы</span>
-                </a>
-            </nav>
-        </aside>
-
-        <!-- ОСНОВНОЙ КОНТЕНТ -->
-        <main class="main-content">
-            <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-            <div class="topbar">
-                <div class="user-info">
-                    <div class="user-avatar">👤</div>
-                    <span class="user-name" id="currentUser"></span>
-                </div>
-                <button class="logout-btn" onclick="handleLogout()">Выход</button>
+        </div>
+        <div class="app-body">
+            <div class="sidebar">
+                <button class="menu-btn active" data-tab="menuTab">📋 Меню</button>
+                <button class="menu-btn" data-tab="tablesTab">🙘 Столы</button>
+                <button class="menu-btn" data-tab="ordersTab">📑 Заказы</button>
+                <button class="menu-btn hidden" id="employeesMenuBtn" data-tab="employeesTab">👥 Сотрудники</button>
             </div>
-
-            <!-- КОНТЕНТ -->
-            <div class="content">
-                <!-- МЕНЮ -->
-                <div id="menuSection" class="section">
-                    <div class="content-header">
-                        <h2 class="content-title">Меню ресторана</h2>
+            <div class="main-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Всего заказов</h3>
+                        <div class="value" id="statOrders">0</div>
                     </div>
-                    <div class="menu-grid" id="menuGrid">
-                        <!-- Пункты меню загружаются динамически -->
+                    <div class="stat-card">
+                        <h3>Активные</h3>
+                        <div class="value" id="statActive">0</div>
                     </div>
-                </div>
-
-                <!-- ЗАКАЗЫ -->
-                <div id="ordersSection" class="section hidden">
-                    <div class="content-header">
-                        <h2 class="content-title">Заказы</h2>
+                    <div class="stat-card">
+                        <h3>Занято столов</h3>
+                        <div class="value" id="statTables">0</div>
                     </div>
-                    <div class="orders-list" id="ordersList">
-                        <!-- Заказы загружаются динамически -->
+                    <div class="stat-card hidden" id="statEmployeeCard">
+                        <h3>Сотрудников</h3>
+                        <div class="value" id="statEmployees">0</div>
                     </div>
                 </div>
-
-                <!-- СТОЛЫ -->
-                <div id="tablesSection" class="section hidden">
-                    <div class="content-header">
-                        <h2 class="content-title">Столы</h2>
-                    </div>
-                    <div class="tables-grid" id="tablesGrid">
-                        <!-- Столы загружаются динамически -->
+                <div class="tabpane" id="menuTab">
+                    <h2>📋 Меню</h2>
+                    <div class="items-grid" id="menuContent"></div>
+                </div>
+                <div class="tabpane hidden" id="tablesTab">
+                    <h2>🙘 Столы</h2>
+                    <div class="items-grid" id="tablesGrid"></div>
+                </div>
+                <div class="tabpane hidden" id="ordersTab">
+                    <h2>📑 Заказы</h2>
+                    <div class="orders-list" id="ordersList"></div>
+                </div>
+                <div class="tabpane hidden" id="employeesTab">
+                    <h2>👥 Сотрудники</h2>
+                    <div class="employees-container">
+                        <div class="employees-header">
+                            <h3 style="margin: 0;">Список сотрудников</h3>
+                            <button class="btn btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;" onclick="addEmployeeModal()">➕ Новый</button>
+                        </div>
+                        <table class="employees-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Логин</th>
+                                    <th>Имя</th>
+                                    <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeesTableBody">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
-    <script src="/static/js/app.js"></script>
+    <!-- MODALS -->
+    <div id="employeeModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Добавить сотрудника</h3>
+                <button style="background: none; border: none; font-size: 20px; cursor: pointer;" onclick="closeEmployeeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm">
+                    <div class="form-group">
+                        <label>Логин</label>
+                        <input type="text" id="empUsername" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="empName" placeholder="Введите имя" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="empPassword" placeholder="Введите пароль">
+                    </div>
+                    <div class="form-group">
+                        <label>Роль</label>
+                        <select id="empRole" required>
+                            <option value="">Выберите роль</option>
+                            <option value="waiter">Официант</option>
+                            <option value="chef">Повар</option>
+                            <option value="admin">Админ</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeEmployeeModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="saveEmployee()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="orderModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Детали заказа</h3>
+                <button style="background: none; border: none; font-size: 20px; cursor: pointer;" onclick="closeOrderModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="orderDetails"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeOrderModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=final"></script>
 </body>
 </html>

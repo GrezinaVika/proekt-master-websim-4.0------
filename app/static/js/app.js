@@ -72,15 +72,38 @@ function showSuccess(message) {
 
 async function login(username, password) {
     try {
-        const response = await apiRequest('/auth/login', 'POST', { username, password });
+        // Отправляем как query параметры, а не JSON body
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('password', password);
         
-        if (!response || !response.user) {
+        const url = `${API_BASE_URL}/auth/login?${params.toString()}`;
+        console.log('[LOGIN] Trying:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        console.log('[LOGIN] Response status:', response.status);
+        const text = await response.text();
+        console.log('[LOGIN] Response text:', text);
+        
+        if (!response.ok) {
+            throw new Error(`API Error ${response.status}: ${text}`);
+        }
+        
+        const data = JSON.parse(text);
+        
+        if (!data || !data.user) {
             showError('Неверные учетные данные');
             return false;
         }
         
-        currentUser = response.user;
-        authToken = response.access_token;
+        currentUser = data.user;
+        authToken = data.access_token;
         
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         localStorage.setItem('authToken', authToken);
@@ -94,6 +117,7 @@ async function login(username, password) {
         showSuccess(`Добро пожаловать, ${currentUser.name}!`);
         return true;
     } catch (error) {
+        console.error('[LOGIN ERROR]', error);
         showError('Ошибка входа: ' + error.message);
         return false;
     }
@@ -174,7 +198,7 @@ async function loadMenu() {
     if (!menuContent) return;
     
     try {
-        menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Загрузка...</div>';
+        menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;"Загружка...</div>';
         const dishes = await getDishes();
         
         if (!Array.isArray(dishes) || dishes.length === 0) {
@@ -199,7 +223,7 @@ async function loadMenu() {
             </div>
         `).join('');
     } catch (error) {
-        menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загрузки</div>';
+        menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загружки</div>';
         console.error('Error loading menu:', error);
     }
 }
@@ -209,7 +233,7 @@ async function loadTables() {
     if (!tablesGrid) return;
     
     try {
-        tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">Загрузка столов...</div>';
+        tablesGrid.innerHTML = '<div style="padding: 20px; color: #999;">Загружка столов...</div>';
         const tables = await getTables();
         
         if (!Array.isArray(tables) || tables.length === 0) {
@@ -228,7 +252,7 @@ async function loadTables() {
             </div>
         `).join('');
     } catch (error) {
-        tablesGrid.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загрузки столов</div>';
+        tablesGrid.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загружки столов</div>';
         console.error('Error loading tables:', error);
     }
 }
@@ -238,7 +262,7 @@ async function loadOrders() {
     if (!ordersList) return;
     
     try {
-        ordersList.innerHTML = '<div style="padding: 20px; color: #999;">Загрузка заказов...</div>';
+        ordersList.innerHTML = '<div style="padding: 20px; color: #999;">Загружка заказов...</div>';
         let orders = await getOrders();
         
         if (!Array.isArray(orders)) orders = [];
@@ -262,7 +286,7 @@ async function loadOrders() {
             </div>
         `).join('');
     } catch (error) {
-        ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загрузки заказов</div>';
+        ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загружки заказов</div>';
         console.error('Error loading orders:', error);
     }
 }
@@ -272,7 +296,7 @@ async function loadEmployees() {
     if (!tableBody) return;
     
     try {
-        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Загрузка...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Загружка...</td></tr>';
         const employees = await getEmployees();
         
         if (!Array.isArray(employees) || employees.length === 0) {
@@ -297,7 +321,7 @@ async function loadEmployees() {
             </tr>
         `).join('');
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Ошибка загрузки</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Ошибка загружки</td></tr>';
         console.error('Error loading employees:', error);
     }
 }

@@ -905,6 +905,22 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔑 Открыта страница входа');
     
     const doLogin = document.getElementById('doLogin');
+
+        // ДОПОЛНИТЕЛЬНЫЙ ОБРАБОТЧИК: перехватываем submit формы
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+                    loginForm.addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    const username = document.getElementById('loginUser')?.value?.trim() || '';
+                                    const password = document.getElementById('loginPass')?.value?.trim() || '';
+                                    if (username && password) {
+                                                        login(username, password);
+                                                    }
+                                });
+                }
+        console.log('✅ Form submit handler added');
+
+        // Обработчик клика по кнопке
     if (doLogin) {
         doLogin.addEventListener('click', function(e) {
             e.preventDefault();
@@ -918,6 +934,7 @@ document.addEventListener('DOMContentLoaded', function() {
             login(username, password);
         });
     }
+        console.log('✅ Button click handler added');
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {

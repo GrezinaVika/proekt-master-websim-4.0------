@@ -532,7 +532,7 @@
                         <label>Пароль</label>
                         <input type="password" id="loginPass" placeholder="Введите пароль" required>
                     </div>
-                    <button type="button" class="btn btn-primary" id="doLogin">✅ Вход</button>
+                    <button type="button" class="btn btn-primary" id="doLogin onclick="handleLogin()"">✅ Вход</button>
                 </form>
             </div>
 
@@ -686,6 +686,70 @@
             </div>
         </div>
     </div>
+
+        <script>
+    // INLINE LOGIN HANDLER - MUST WORK!
+    console.log('🔴 INLINE script loaded!');
+    
+    function handleLogin() {
+        console.log('🚀 handleLogin() CALLED!');
+        
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        
+        console.log('Username:', username);
+        console.log('Password:', password ? '***' : 'empty');
+        
+        if (!username || !password) {
+            alert('❌ Введите логин и пароль!');
+            return;
+        }
+        
+        console.log('🚀 Sending login request...');
+        
+        // Create form data
+        const formData = new URLSearchParams();
+        formData.append('username', username);
+        formData.append('password', password);
+        
+        // Send login request
+        fetch('/api/auth/login?' + formData.toString(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('📥 Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📥 Response data:', data);
+            
+            if (data && data.user) {
+                console.log('✅ Login successful!');
+                alert('✅ Вход выполнен!');
+                
+                // Hide auth section
+                document.getElementById('authSection').classList.add('hidden');
+                // Show app section
+                document.getElementById('appSection').classList.remove('hidden');
+                
+                // Update user info
+                document.getElementById('accountInfo').innerHTML = '<h3>' + data.user.name + '</h3><p>' + data.user.role + '</p>';
+            } else {
+                console.error('❌ Login failed');
+                alert('❌ Неверные данные!');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Login error:', error);
+            alert('❌ Ошибка: ' + error.message);
+        });
+    }
+    
+    console.log('✅ handleLogin() defined and ready!');
+    </script>
 
     <script src="/static/js/app.js?v=final"></script>
 </body>

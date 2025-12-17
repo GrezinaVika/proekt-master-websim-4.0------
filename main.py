@@ -50,18 +50,26 @@ templates = Jinja2Templates(directory="app/templates")
 def get_db():
     """Получение подключения к БД"""
     db_path = "restaurant.db"
-    if not os.path.exists(db_path):
-        init_database()
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_database():
-    """Инициализация БД"""
-    conn = sqlite3.connect("restaurant.db")
+    """Инициализация БД с полной переиспись"""
+    db_path = "restaurant.db"
+    
+    # Удаляем старую БД
+    if os.path.exists(db_path):
+        try:
+            os.remove(db_path)
+            logger.info("🗑️  Old database removed")
+        except:
+            pass
+    
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Таблица пользователей
+    # Таблица пользователей (Users/Employees)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,41 +126,50 @@ def init_database():
         )
     ''')
     
+    logger.info("✅ Database tables created")
+    
     # Вставляем тестовых пользователей
-    cursor.execute('DELETE FROM users')
-    cursor.execute(
-        'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
-        ('ofikNum1', '123321', 'Официант 1', 'waiter')
-    )
-    cursor.execute(
-        'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
-        ('adminNum1', '123321', 'Администратор', 'admin')
-    )
-    cursor.execute(
-        'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
-        ('povarNum1', '123321', 'Повар 1', 'chef')
-    )
+    test_users = [
+        ('ofikNum1', '123321', 'Официант 1', 'waiter'),
+        ('adminNum1', '123321', 'Администратор', 'admin'),
+        ('povarNum1', '123321', 'Повар 1', 'chef'),
+    ]
+    
+    for user in test_users:
+        try:
+            cursor.execute(
+                'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
+                user
+            )
+        except:
+            pass
+    
+    logger.info("✅ Test users inserted")
     
     # Вставляем тестовые блюда
-    cursor.execute('DELETE FROM dishes')
     test_dishes = [
-        ('Борщ', 350, 'Основное', 20, 'Классический украинский борщ'),
-        ('Стейк', 1200, 'Основное', 25, 'Мраморная говядина на гриле'),
-        ('Салат', 450, 'Основное', 15, 'Свежий овощной салат'),
-        ('Кофе', 150, 'Напитки', 5, 'Крепкий эспрессо'),
-        ('Чизкейк', 300, 'Десерт', 10, 'Нью-йоркский чизкейк'),
-        ('Пицца', 650, 'Основное', 30, 'Пицца Маргарита'),
-        ('Чай', 100, 'Напитки', 5, 'Черный чай'),
-        ('Тирамису', 350, 'Десерт', 10, 'Итальянский десерт'),
+        ('Борщ', 350, 'Основное', 20, 'Классический украинский борщ', 1),
+        ('Стейк', 1200, 'Основное', 25, 'Мраморная говядина на гриле', 1),
+        ('Салат', 450, 'Основное', 15, 'Свежий овощной салат', 1),
+        ('Кофе', 150, 'Напитки', 5, 'Крепкий эспрессо', 1),
+        ('Чизкейк', 300, 'Десерт', 10, 'Нью-йоркский чизкейк', 1),
+        ('Пицца', 650, 'Основное', 30, 'Пицца Маргарита', 1),
+        ('Чай', 100, 'Напитки', 5, 'Черный чай', 1),
+        ('Тирамису', 350, 'Десерт', 10, 'Итальянский десерт', 1),
     ]
+    
     for dish in test_dishes:
-        cursor.execute(
-            'INSERT INTO dishes (name, price, category, cooking_time, description) VALUES (?, ?, ?, ?, ?)',
-            dish
-        )
+        try:
+            cursor.execute(
+                'INSERT INTO dishes (name, price, category, cooking_time, description, available) VALUES (?, ?, ?, ?, ?, ?)',
+                dish
+            )
+        except:
+            pass
+    
+    logger.info("✅ Test dishes inserted")
     
     # Вставляем тестовые столы
-    cursor.execute('DELETE FROM tables')
     test_tables = [
         (1, 4, 'У окна', 'free'),
         (2, 6, 'Центр', 'occupied'),
@@ -163,30 +180,39 @@ def init_database():
         (7, 2, 'Бар', 'free'),
         (8, 6, 'Центр', 'free'),
     ]
+    
     for table in test_tables:
-        cursor.execute(
-            'INSERT INTO tables (table_number, capacity, location, status) VALUES (?, ?, ?, ?)',
-            table
-        )
+        try:
+            cursor.execute(
+                'INSERT INTO tables (table_number, capacity, location, status) VALUES (?, ?, ?, ?)',
+                table
+            )
+        except:
+            pass
+    
+    logger.info("✅ Test tables inserted")
     
     # Вставляем тестовые заказы
-    cursor.execute('DELETE FROM orders')
-    cursor.execute(
-        'INSERT INTO orders (table_id, waiter_id, status, total_amount, dishes) VALUES (?, ?, ?, ?, ?)',
-        (2, 1, 'pending', 1200, json.dumps(['Борщ', 'Чай']))
-    )
-    cursor.execute(
-        'INSERT INTO orders (table_id, waiter_id, status, total_amount, dishes) VALUES (?, ?, ?, ?, ?)',
-        (4, 1, 'cooking', 800, json.dumps(['Стейк']))
-    )
-    cursor.execute(
-        'INSERT INTO orders (table_id, waiter_id, status, total_amount, dishes) VALUES (?, ?, ?, ?, ?)',
-        (1, 1, 'ready', 450, json.dumps(['Салат']))
-    )
+    test_orders = [
+        (2, 1, 'pending', 1200, json.dumps(['Борщ', 'Чай'])),
+        (4, 1, 'cooking', 800, json.dumps(['Стейк'])),
+        (1, 1, 'ready', 450, json.dumps(['Салат'])),
+    ]
+    
+    for order in test_orders:
+        try:
+            cursor.execute(
+                'INSERT INTO orders (table_id, waiter_id, status, total_amount, dishes) VALUES (?, ?, ?, ?, ?)',
+                order
+            )
+        except:
+            pass
+    
+    logger.info("✅ Test orders inserted")
     
     conn.commit()
     conn.close()
-    logger.info('✅ Database initialized')
+    logger.info('✅ Database fully initialized')
 
 # ==================== STARTUP ====================
 
@@ -197,6 +223,7 @@ def startup_event():
         init_database()
         logger.info("✅ Database ready")
         logger.info("🚀 Restaurant Management System started")
+        logger.info("📍 Access at http://127.0.0.1:8000")
     except Exception as e:
         logger.error(f"❌ Startup error: {e}")
 
@@ -322,13 +349,15 @@ async def get_dishes():
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('SELECT id, name, price, category, cooking_time FROM dishes WHERE available = 1')
-        dishes = [{
-            'id': row[0],
-            'name': row[1],
-            'price': row[2],
-            'category': row[3],
-            'cooking_time': row[4]
-        } for row in cursor.fetchall()]
+        dishes = []
+        for row in cursor.fetchall():
+            dishes.append({
+                'id': row[0],
+                'name': row[1],
+                'price': row[2],
+                'category': row[3],
+                'cooking_time': row[4]
+            })
         conn.close()
         return dishes
     except Exception as e:
@@ -342,12 +371,13 @@ async def create_dish(name: str, price: float, category: str, cooking_time: int 
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO dishes (name, price, category, cooking_time, description) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO dishes (name, price, category, cooking_time, description, available) VALUES (?, ?, ?, ?, ?, 1)',
             (name, price, category, cooking_time, description)
         )
         conn.commit()
         dish_id = cursor.lastrowid
         conn.close()
+        logger.info(f"✅ Dish created: {name} (ID: {dish_id})")
         return {"id": dish_id, "name": name, "price": price, "category": category}
     except Exception as e:
         logger.error(f"Create dish error: {e}")
@@ -361,16 +391,17 @@ async def update_dish(dish_id: int, name: str = None, price: float = None, categ
         cursor = conn.cursor()
         
         if name:
-            cursor.execute('UPDATE dishes SET name = ? WHERE id = ?', (name, dish_id))
+            cursor.execute('UPDATE dishes SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (name, dish_id))
         if price is not None:
-            cursor.execute('UPDATE dishes SET price = ? WHERE id = ?', (price, dish_id))
+            cursor.execute('UPDATE dishes SET price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (price, dish_id))
         if category:
-            cursor.execute('UPDATE dishes SET category = ? WHERE id = ?', (category, dish_id))
+            cursor.execute('UPDATE dishes SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (category, dish_id))
         if cooking_time is not None:
-            cursor.execute('UPDATE dishes SET cooking_time = ? WHERE id = ?', (cooking_time, dish_id))
+            cursor.execute('UPDATE dishes SET cooking_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (cooking_time, dish_id))
         
         conn.commit()
         conn.close()
+        logger.info(f"✅ Dish updated: ID {dish_id}")
         return {"success": True, "dish_id": dish_id}
     except Exception as e:
         logger.error(f"Update dish error: {e}")
@@ -382,9 +413,10 @@ async def delete_dish(dish_id: int):
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute('UPDATE dishes SET available = 0 WHERE id = ?', (dish_id,))
+        cursor.execute('UPDATE dishes SET available = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (dish_id,))
         conn.commit()
         conn.close()
+        logger.info(f"✅ Dish deleted: ID {dish_id}")
         return {"success": True}
     except Exception as e:
         logger.error(f"Delete dish error: {e}")
@@ -399,17 +431,38 @@ async def get_tables():
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('SELECT id, table_number, capacity, location, status FROM tables')
-        tables = [{
-            'id': row[0],
-            'table_number': row[1],
-            'capacity': row[2],
-            'location': row[3],
-            'status': row[4]
-        } for row in cursor.fetchall()]
+        tables = []
+        for row in cursor.fetchall():
+            tables.append({
+                'id': row[0],
+                'table_number': row[1],
+                'capacity': row[2],
+                'location': row[3],
+                'status': row[4]
+            })
         conn.close()
+        logger.info(f"📊 Tables loaded: {len(tables)}")
         return tables
     except Exception as e:
         logger.error(f"Get tables error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tables/{table_id}")
+async def update_table(table_id: int, status: str = None):
+    """Обновить статус стола"""
+    try:
+        if status not in ['free', 'occupied', 'reserved']:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE tables SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (status, table_id))
+        conn.commit()
+        conn.close()
+        logger.info(f"✅ Table {table_id} updated to {status}")
+        return {"success": True, "table_id": table_id, "status": status}
+    except Exception as e:
+        logger.error(f"Update table error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== ORDERS ENDPOINTS ====================
@@ -433,9 +486,66 @@ async def get_orders():
                 'created_at': row[6]
             })
         conn.close()
+        logger.info(f"📋 Orders loaded: {len(orders)}")
         return orders
     except Exception as e:
         logger.error(f"Get orders error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/orders/")
+async def create_order(table_id: int, waiter_id: int, dishes: list, total_amount: float):
+    """Создать новый заказ"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO orders (table_id, waiter_id, status, total_amount, dishes) VALUES (?, ?, ?, ?, ?)',
+            (table_id, waiter_id, 'pending', total_amount, json.dumps(dishes))
+        )
+        conn.commit()
+        order_id = cursor.lastrowid
+        conn.close()
+        logger.info(f"✅ Order created: ID {order_id}")
+        return {"id": order_id, "table_id": table_id, "waiter_id": waiter_id, "status": "pending"}
+    except Exception as e:
+        logger.error(f"Create order error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/orders/{order_id}")
+async def update_order(order_id: int, status: str = None, total_amount: float = None, dishes: list = None):
+    """Обновить заказ"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        if status:
+            cursor.execute('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (status, order_id))
+        if total_amount is not None:
+            cursor.execute('UPDATE orders SET total_amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (total_amount, order_id))
+        if dishes:
+            cursor.execute('UPDATE orders SET dishes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (json.dumps(dishes), order_id))
+        
+        conn.commit()
+        conn.close()
+        logger.info(f"✅ Order {order_id} updated")
+        return {"success": True, "order_id": order_id}
+    except Exception as e:
+        logger.error(f"Update order error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/orders/{order_id}")
+async def delete_order(order_id: int):
+    """Удалить заказ"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM orders WHERE id = ?', (order_id,))
+        conn.commit()
+        conn.close()
+        logger.info(f"✅ Order deleted: ID {order_id}")
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Delete order error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== EMPLOYEES ENDPOINTS ====================
@@ -447,14 +557,17 @@ async def get_employees():
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('SELECT id, username, name, role, created_at FROM users')
-        employees = [{
-            'id': row[0],
-            'username': row[1],
-            'name': row[2],
-            'role': row[3],
-            'created_at': row[4]
-        } for row in cursor.fetchall()]
+        employees = []
+        for row in cursor.fetchall():
+            employees.append({
+                'id': row[0],
+                'username': row[1],
+                'name': row[2],
+                'role': row[3],
+                'created_at': row[4]
+            })
         conn.close()
+        logger.info(f"👥 Employees loaded: {len(employees)}")
         return employees
     except Exception as e:
         logger.error(f"Get employees error: {e}")
@@ -484,6 +597,7 @@ async def create_employee(username: str, password: str, name: str, role: str):
         employee_id = cursor.lastrowid
         conn.close()
         
+        logger.info(f"✅ Employee created: {username} (ID: {employee_id})")
         return {
             "id": employee_id,
             "username": username,
@@ -505,18 +619,19 @@ async def update_employee(employee_id: int, username: str = None, name: str = No
         cursor = conn.cursor()
         
         if username:
-            cursor.execute('UPDATE users SET username = ? WHERE id = ?', (username, employee_id))
+            cursor.execute('UPDATE users SET username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (username, employee_id))
         if name:
-            cursor.execute('UPDATE users SET name = ? WHERE id = ?', (name, employee_id))
+            cursor.execute('UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (name, employee_id))
         if role:
             if role not in ['waiter', 'chef', 'admin']:
                 raise HTTPException(status_code=400, detail="Неверная роль")
-            cursor.execute('UPDATE users SET role = ? WHERE id = ?', (role, employee_id))
+            cursor.execute('UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (role, employee_id))
         if password:
-            cursor.execute('UPDATE users SET password = ? WHERE id = ?', (password, employee_id))
+            cursor.execute('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (password, employee_id))
         
         conn.commit()
         conn.close()
+        logger.info(f"✅ Employee {employee_id} updated")
         return {"success": True, "employee_id": employee_id}
     except HTTPException:
         raise
@@ -544,6 +659,7 @@ async def delete_employee(employee_id: int):
         conn.commit()
         conn.close()
         
+        logger.info(f"✅ Employee {employee_id} deleted")
         return {"success": True, "message": "Сотрудник удален"}
     except HTTPException:
         raise

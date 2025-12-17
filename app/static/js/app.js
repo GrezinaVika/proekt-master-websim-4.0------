@@ -903,8 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // IMPORTANT: ALWAYS SHOW LOGIN SCREEN ON LOAD
 // ==================== INITIALIZATION ====================
 // Скрипт загружается в конце <body>, DOM уже готов!
-(function initApp() {
-    console.log('🚀 App init started...');
+   console.log('🚀 App init started...');
     
     // Check saved auth
     const savedUser = localStorage.getItem('currentUser');

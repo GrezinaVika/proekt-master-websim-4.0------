@@ -452,11 +452,24 @@ async function saveDish() {
         };
         
         if (editingDishId) {
-            await apiRequest(`/dishes/${editingDishId}`, 'PUT', dishData);
+            // Update dish - use query params
+            const params = new URLSearchParams();
+            params.append('name', name);
+            params.append('price', price.toString());
+            params.append('category', category);
+            params.append('cooking_time', cookingTime.toString());
+            await apiRequest(`/dishes/${editingDishId}?${params.toString()}`, 'PUT');
             showSuccess('Блюдо обновлено');
         } else {
-            await apiRequest('/dishes/', 'POST', dishData);
-            showSuccess('Блюдо добавлено');
+            // Create dish - use query params
+            const params = new URLSearchParams();
+            params.append('name', name);
+            params.append('price', price.toString());
+            params.append('category', category);
+            params.append('cooking_time', cookingTime.toString());
+            params.append('description', '');
+            await apiRequest(`/dishes/?${params.toString()}`, 'POST');
+            showSuccess('Блюдо добавлено');до добавлено');
         }
         closeDishModal();
         await loadMenu(); // Обновляем меню мгновенно
